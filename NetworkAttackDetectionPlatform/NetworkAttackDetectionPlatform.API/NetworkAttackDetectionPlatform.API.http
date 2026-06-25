@@ -1,0 +1,6 @@
+@NetworkAttackDetectionPlatform.API_HostAddress = http://localhost:5067
+
+GET {{NetworkAttackDetectionPlatform.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
