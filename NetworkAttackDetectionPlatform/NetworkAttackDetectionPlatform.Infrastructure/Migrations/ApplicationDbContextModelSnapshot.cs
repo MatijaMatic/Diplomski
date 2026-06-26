@@ -39,6 +39,12 @@ namespace NetworkAttackDetectionPlatform.Infrastructure.Migrations
 
                 b.Property<DateTime>("OccurrenceEnd").HasColumnType("datetime2");
 
+                b.Property<int>("Status").HasColumnType("int");
+
+                b.Property<DateTime>("CreatedAt").HasColumnType("datetime2");
+
+                b.Property<DateTime>("UpdatedAt").HasColumnType("datetime2");
+
                 b.HasKey("Id");
 
                 b.ToTable("AttackDetections");
