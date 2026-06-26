@@ -82,37 +82,13 @@ namespace NetworkAttackDetectionPlatform.Application.Services
             if (pageNumber <= 0) pageNumber = 1;
             if (pageSize <= 0) pageSize = 50;
 
-            var query = _repo.GetAll().AsQueryable();
+            var (items, total) = _repo.GetDetections(pageNumber, pageSize, attackType, severity, null, startDate, endDate, minConfidence, maxConfidence);
 
-            // Filtering logic belongs to Application layer
-            if (attackType.HasValue)
-                query = query.Where(a => (int)a.AttackType == attackType.Value);
-
-            if (severity.HasValue)
-                query = query.Where(a => (int)a.Severity == severity.Value);
-
-            if (startDate.HasValue)
-                query = query.Where(a => a.Occurrence.End >= startDate.Value.ToUniversalTime());
-
-            if (endDate.HasValue)
-                query = query.Where(a => a.Occurrence.Start <= endDate.Value.ToUniversalTime());
-
-            if (minConfidence.HasValue)
-                query = query.Where(a => a.Confidence.Value >= minConfidence.Value);
-
-            if (maxConfidence.HasValue)
-                query = query.Where(a => a.Confidence.Value <= maxConfidence.Value);
-
-            var total = query.Count();
-            var items = query.OrderByDescending(a => a.Occurrence.End)
-                             .Skip((pageNumber - 1) * pageSize)
-                             .Take(pageSize)
-                             .Select(MapToDto)
-                             .ToList();
+            var dtoItems = items.Select(MapToDto).ToList();
 
             return new PagedResult<AttackDetectionDto>
             {
-                Items = items,
+                Items = dtoItems,
                 TotalCount = total,
                 PageNumber = pageNumber,
                 PageSize = pageSize
@@ -143,8 +119,6 @@ namespace NetworkAttackDetectionPlatform.Application.Services
                     existing.Resolve();
                     break;
                 case DetectionStatusEnum.New:
-                    // setting back to New is allowed
-                    // no dedicated method, set via reflection? We'll set UpdatedAt and Status directly via internal method not available. Instead, throw unsupported.
                     throw new InvalidOperationException("Setting status to New is not supported.");
                 default:
                     throw new ArgumentException("Unsupported status value.", nameof(statusName));
