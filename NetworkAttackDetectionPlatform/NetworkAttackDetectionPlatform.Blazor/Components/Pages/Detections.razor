@@ -1,0 +1,110 @@
+@page "/detections"
+@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
+
+<h3>Detections</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="mb-3">
+        <label>Attack Type:</label>
+        <select @bind="filterAttackType" class="form-select">
+            <option value="-1">All</option>
+            <option value="1">PortScan</option>
+            <option value="2">DDoS</option>
+            <option value="3">Malware</option>
+            <option value="4">BruteForce</option>
+            <option value="5">Phishing</option>
+            <option value="6">DataExfiltration</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label>Severity:</label>
+        <select @bind="filterSeverity" class="form-select">
+            <option value="-1">All</option>
+            <option value="1">Low</option>
+            <option value="2">Medium</option>
+            <option value="3">High</option>
+            <option value="4">Critical</option>
+        </select>
+    </div>
+    <div class="mb-3">
+        <label>Date (from):</label>
+        <input type="date" @bind="filterDate" class="form-control" />
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Source</th>
+                <th>Destination</th>
+                <th>Attack Type</th>
+                <th>Severity</th>
+                <th>Confidence</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in FilteredDetections)
+            {
+                <tr>
+                    <td>@d.SourceIp:@d.SourcePort</td>
+                    <td>@d.DestinationIp:@d.DestinationPort</td>
+                    <td>@MapAttackType(d.AttackType)</td>
+                    <td>@MapSeverity(d.Severity)</td>
+                    <td>@d.Confidence</td>
+                    <td>@d.OccurrenceEnd.ToLocalTime()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private bool isLoading = true;
+    private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> allDetections = new();
+
+    private int filterAttackType = -1;
+    private int filterSeverity = -1;
+    private DateTime? filterDate;
+
+    private IEnumerable<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> FilteredDetections =>
+        allDetections.Where(d => (filterAttackType == -1 || d.AttackType == filterAttackType)
+                                && (filterSeverity == -1 || d.Severity == filterSeverity)
+                                && (!filterDate.HasValue || d.OccurrenceStart.Date >= filterDate.Value.Date));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            allDetections = await ApiClient.GetAllDetectionsAsync();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string MapAttackType(int t) => t switch
+    {
+        1 => "PortScan",
+        2 => "DDoS",
+        3 => "Malware",
+        4 => "BruteForce",
+        5 => "Phishing",
+        6 => "DataExfiltration",
+        _ => "Unknown"
+    };
+
+    private string MapSeverity(int s) => s switch
+    {
+        1 => "Low",
+        2 => "Medium",
+        3 => "High",
+        4 => "Critical",
+        _ => "Unknown"
+    };
+}

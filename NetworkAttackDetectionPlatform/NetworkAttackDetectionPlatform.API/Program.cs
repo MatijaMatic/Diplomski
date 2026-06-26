@@ -4,6 +4,7 @@ using NetworkAttackDetectionPlatform.Infrastructure.Data;
 using NetworkAttackDetectionPlatform.Domain.Interfaces;
 using NetworkAttackDetectionPlatform.Application.Interfaces;
 using NetworkAttackDetectionPlatform.Infrastructure.Repositories;
+using Microsoft.Extensions.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +30,26 @@ builder.Services.AddScoped<IAttackDetectionRepository, AttackDetectionRepository
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
 
 var app = builder.Build();
+
+// Apply pending EF Core migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        logger.LogInformation("Applying pending migrations (if any)...");
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        db.Database.Migrate();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+        // Re-throw to prevent app from starting in inconsistent state
+        throw;
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

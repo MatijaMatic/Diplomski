@@ -1,0 +1,102 @@
+@page "/dashboard"
+@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
+
+<h3>Dashboard</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div>
+        <p>Total detected attacks: @totalAttacks</p>
+
+        <h4>Attack Types</h4>
+        <ul>
+            @foreach (var kv in attackTypeStats)
+            {
+                <li>@kv.Key: @kv.Value</li>
+            }
+        </ul>
+
+        <h4>Severity</h4>
+        <ul>
+            @foreach (var kv in severityStats)
+            {
+                <li>@kv.Key: @kv.Value</li>
+            }
+        </ul>
+
+        <h4>Recent Detections</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Source</th>
+                    <th>Destination</th>
+                    <th>Attack Type</th>
+                    <th>Severity</th>
+                    <th>Confidence</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in recentDetections)
+                {
+                    <tr>
+                        <td>@d.SourceIp:@d.SourcePort</td>
+                        <td>@d.DestinationIp:@d.DestinationPort</td>
+                        <td>@MapAttackType(d.AttackType)</td>
+                        <td>@MapSeverity(d.Severity)</td>
+                        <td>@d.Confidence</td>
+                        <td>@d.OccurrenceEnd.ToLocalTime()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private int totalAttacks;
+    private Dictionary<int, int> attackTypeStats = new();
+    private Dictionary<int, int> severityStats = new();
+    private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> recentDetections = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var all = await ApiClient.GetAllDetectionsAsync();
+            totalAttacks = all.Count;
+            attackTypeStats = all.GroupBy(a => a.AttackType).ToDictionary(g => g.Key, g => g.Count());
+            severityStats = all.GroupBy(a => a.Severity).ToDictionary(g => g.Key, g => g.Count());
+            recentDetections = all.OrderByDescending(a => a.OccurrenceEnd).Take(10).ToList();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string MapAttackType(int t) => t switch
+    {
+        1 => "PortScan",
+        2 => "DDoS",
+        3 => "Malware",
+        4 => "BruteForce",
+        5 => "Phishing",
+        6 => "DataExfiltration",
+        _ => "Unknown"
+    };
+
+    private string MapSeverity(int s) => s switch
+    {
+        1 => "Low",
+        2 => "Medium",
+        3 => "High",
+        4 => "Critical",
+        _ => "Unknown"
+    };
+}

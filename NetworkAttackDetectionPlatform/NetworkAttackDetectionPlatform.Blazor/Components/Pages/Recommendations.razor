@@ -1,0 +1,51 @@
+@page "/recommendations"
+@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
+
+<h3>Recommendations</h3>
+
+@if (isLoading)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Recommendation</th>
+                <th>Attack (source -> dest)</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in recommendations)
+            {
+                <tr>
+                    <td>@r.Text</td>
+                    <td>@(attackLookup.TryGetValue(r.AttackDetectionId, out var atk) ? $"{atk.SourceIp}:{atk.SourcePort} -> {atk.DestinationIp}:{atk.DestinationPort}" : "Unknown")</td>
+                    <td>@r.CreatedAt.ToLocalTime()</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private bool isLoading = true;
+    private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.RecommendationDto> recommendations = new();
+    private Dictionary<Guid, NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> attackLookup = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var all = await ApiClient.GetAllDetectionsAsync();
+            attackLookup = all.ToDictionary(a => a.Id, a => a);
+            recommendations = all.SelectMany(a => a.Recommendations).OrderByDescending(r => r.CreatedAt).ToList();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
