@@ -12,5 +12,6 @@ namespace NetworkAttackDetectionPlatform.Blazor.Services
         Task<List<RecommendationDto>> GetRecommendationsByAttackIdAsync(Guid attackId);
         Task<AttackDetectionDto?> CreateAttackDetectionAsync(CreateAttackDetectionDto dto);
         Task<RecommendationDto?> CreateRecommendationAsync(CreateRecommendationDto dto);
+        Task<bool> UpdateDetectionStatusAsync(Guid id, string status);
     }
 }

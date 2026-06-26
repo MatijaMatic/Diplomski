@@ -53,5 +53,13 @@ namespace NetworkAttackDetectionPlatform.Blazor.Services
             resp.EnsureSuccessStatusCode();
             return await resp.Content.ReadFromJsonAsync<RecommendationDto>();
         }
+
+        public async Task<bool> UpdateDetectionStatusAsync(Guid id, string status)
+        {
+            var payload = new StatusUpdateDto { Status = status };
+            var resp = await _http.PutAsJsonAsync($"api/AttackDetection/{id}/status", payload);
+            if (resp.IsSuccessStatusCode) return true;
+            return false;
+        }
     }
 }

@@ -1,7 +1,13 @@
 @page "/detections"
 @inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
+@inject IJSRuntime Js
 
 <h3>Detections</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
 
 @if (isLoading)
 {
@@ -45,7 +51,10 @@ else
                 <th>Severity</th>
                 <th>Confidence</th>
                 <th>Status</th>
+                <th>Created</th>
+                <th>Updated</th>
                 <th>Time</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -58,7 +67,32 @@ else
                     <td>@MapSeverity(d.Severity)</td>
                     <td>@d.Confidence</td>
                     <td>@MapStatus(d.Status)</td>
-                    <td>@d.OccurrenceEnd.ToLocalTime()</td>
+                    <td>@d.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@d.UpdatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@d.OccurrenceEnd.ToLocalTime().ToString("g")</td>
+                    <td>
+                        @if (IsProcessing(d.Id))
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span class="ms-1">Processing...</span>
+                        }
+                        else
+                        {
+                            @if (d.Status == 0) // New
+                            {
+                                <button class="btn btn-sm btn-primary me-1" @onclick="() => MarkAnalyzed(d.Id)" disabled="@IsProcessing(d.Id)">Mark Analyzed</button>
+                            }
+                            else if (d.Status == 1) // Analyzed
+                            {
+                                <button class="btn btn-sm btn-success me-1" @onclick="() => ConfirmAttack(d.Id)" disabled="@IsProcessing(d.Id)">Confirm Attack</button>
+                                <button class="btn btn-sm btn-warning me-1" @onclick="() => MarkFalsePositive(d.Id)" disabled="@IsProcessing(d.Id)">Mark False Positive</button>
+                            }
+                            else if (d.Status == 2) // Confirmed
+                            {
+                                <button class="btn btn-sm btn-secondary me-1" @onclick="() => Resolve(d.Id)" disabled="@IsProcessing(d.Id)">Resolve</button>
+                            }
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
@@ -73,6 +107,9 @@ else
     private int filterSeverity = -1;
     private DateTime? filterDate;
 
+    private HashSet<Guid> processing = new();
+    private string errorMessage = string.Empty;
+
     private IEnumerable<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> FilteredDetections =>
         allDetections.Where(d => (filterAttackType == -1 || d.AttackType == filterAttackType)
                                 && (filterSeverity == -1 || d.Severity == filterSeverity)
@@ -80,15 +117,66 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadDetectionsAsync();
+    }
+
+    private async Task LoadDetectionsAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
         try
         {
             allDetections = await ApiClient.GetAllDetectionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to load detections: " + ex.Message;
         }
         finally
         {
             isLoading = false;
         }
     }
+
+    private bool IsProcessing(Guid id) => processing.Contains(id);
+
+    private async Task OnChangeStatus(Guid id, string newStatus)
+    {
+        errorMessage = string.Empty;
+        // confirm
+        var confirmed = await Js.InvokeAsync<bool>("confirm", $"Are you sure you want to set status to '{newStatus}'?");
+        if (!confirmed) return;
+
+        processing.Add(id);
+        StateHasChanged();
+        try
+        {
+            var ok = await ApiClient.UpdateDetectionStatusAsync(id, newStatus);
+            if (!ok)
+            {
+                errorMessage = "API returned an error while updating status.";
+            }
+            else
+            {
+                // refresh list
+                await LoadDetectionsAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Failed to update status: " + ex.Message;
+        }
+        finally
+        {
+            processing.Remove(id);
+            StateHasChanged();
+        }
+    }
+
+    private Task MarkAnalyzed(Guid id) => OnChangeStatus(id, "Analyzed");
+    private Task ConfirmAttack(Guid id) => OnChangeStatus(id, "Confirmed");
+    private Task MarkFalsePositive(Guid id) => OnChangeStatus(id, "FalsePositive");
+    private Task Resolve(Guid id) => OnChangeStatus(id, "Resolved");
 
     private string MapAttackType(int t) => t switch
     {
