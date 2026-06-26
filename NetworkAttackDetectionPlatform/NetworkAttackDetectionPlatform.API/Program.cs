@@ -5,6 +5,8 @@ using NetworkAttackDetectionPlatform.Domain.Interfaces;
 using NetworkAttackDetectionPlatform.Application.Interfaces;
 using NetworkAttackDetectionPlatform.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
+using NetworkAttackDetectionPlatform.API.Middleware;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,13 @@ builder.Services.AddControllers();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+        options.IncludeXmlComments(xmlPath);
+});
 
 // DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -52,6 +60,9 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+// Register exception handling middleware early to catch errors from downstream
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

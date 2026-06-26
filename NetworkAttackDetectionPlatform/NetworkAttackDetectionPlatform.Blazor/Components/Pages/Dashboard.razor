@@ -11,6 +11,15 @@ else
 {
     <div>
         <p>Total detected attacks: @totalAttacks</p>
+        <p>Unresolved attacks: @unresolvedCount</p>
+
+        <h4>By Status</h4>
+        <ul>
+            @foreach (var kv in statusStats)
+            {
+                <li>@MapStatus(kv.Key): @kv.Value</li>
+            }
+        </ul>
 
         <h4>Attack Types</h4>
         <ul>
@@ -28,7 +37,7 @@ else
             }
         </ul>
 
-        <h4>Recent Detections</h4>
+        <h4>Recent Unresolved Detections</h4>
         <table class="table">
             <thead>
                 <tr>
@@ -37,6 +46,7 @@ else
                     <th>Attack Type</th>
                     <th>Severity</th>
                     <th>Confidence</th>
+                    <th>Status</th>
                     <th>Time</th>
                 </tr>
             </thead>
@@ -49,6 +59,7 @@ else
                         <td>@MapAttackType(d.AttackType)</td>
                         <td>@MapSeverity(d.Severity)</td>
                         <td>@d.Confidence</td>
+                        <td>@MapStatus(d.Status)</td>
                         <td>@d.OccurrenceEnd.ToLocalTime()</td>
                     </tr>
                 }
@@ -60,8 +71,10 @@ else
 @code {
     private bool isLoading = true;
     private int totalAttacks;
+    private int unresolvedCount;
     private Dictionary<int, int> attackTypeStats = new();
     private Dictionary<int, int> severityStats = new();
+    private Dictionary<int, int> statusStats = new();
     private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> recentDetections = new();
 
     protected override async Task OnInitializedAsync()
@@ -70,9 +83,11 @@ else
         {
             var all = await ApiClient.GetAllDetectionsAsync();
             totalAttacks = all.Count;
+            statusStats = all.GroupBy(a => a.Status).ToDictionary(g => g.Key, g => g.Count());
+            unresolvedCount = all.Count(a => a.Status != 4); // Resolved = 4
             attackTypeStats = all.GroupBy(a => a.AttackType).ToDictionary(g => g.Key, g => g.Count());
             severityStats = all.GroupBy(a => a.Severity).ToDictionary(g => g.Key, g => g.Count());
-            recentDetections = all.OrderByDescending(a => a.OccurrenceEnd).Take(10).ToList();
+            recentDetections = all.Where(a => a.Status != 4).OrderByDescending(a => a.OccurrenceEnd).Take(10).ToList();
         }
         finally
         {
@@ -97,6 +112,16 @@ else
         2 => "Medium",
         3 => "High",
         4 => "Critical",
+        _ => "Unknown"
+    };
+
+    private string MapStatus(int s) => s switch
+    {
+        0 => "New",
+        1 => "Analyzed",
+        2 => "Confirmed",
+        3 => "FalsePositive",
+        4 => "Resolved",
         _ => "Unknown"
     };
 }

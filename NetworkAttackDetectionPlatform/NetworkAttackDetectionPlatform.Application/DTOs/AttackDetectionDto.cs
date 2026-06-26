@@ -27,6 +27,12 @@ namespace NetworkAttackDetectionPlatform.Application.DTOs
 
         public DateTime OccurrenceEnd { get; set; }
 
+        public int Status { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
         public List<RecommendationDto> Recommendations { get; set; } = new List<RecommendationDto>();
     }
 }

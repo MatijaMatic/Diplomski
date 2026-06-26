@@ -44,6 +44,7 @@ else
                 <th>Attack Type</th>
                 <th>Severity</th>
                 <th>Confidence</th>
+                <th>Status</th>
                 <th>Time</th>
             </tr>
         </thead>
@@ -56,6 +57,7 @@ else
                     <td>@MapAttackType(d.AttackType)</td>
                     <td>@MapSeverity(d.Severity)</td>
                     <td>@d.Confidence</td>
+                    <td>@MapStatus(d.Status)</td>
                     <td>@d.OccurrenceEnd.ToLocalTime()</td>
                 </tr>
             }
@@ -105,6 +107,16 @@ else
         2 => "Medium",
         3 => "High",
         4 => "Critical",
+        _ => "Unknown"
+    };
+
+    private string MapStatus(int s) => s switch
+    {
+        0 => "New",
+        1 => "Analyzed",
+        2 => "Confirmed",
+        3 => "FalsePositive",
+        4 => "Resolved",
         _ => "Unknown"
     };
 }

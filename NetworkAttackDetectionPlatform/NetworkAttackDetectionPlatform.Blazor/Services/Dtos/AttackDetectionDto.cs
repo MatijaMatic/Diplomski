@@ -16,6 +16,9 @@ namespace NetworkAttackDetectionPlatform.Blazor.Services.Dtos
         public double Confidence { get; set; }
         public DateTime OccurrenceStart { get; set; }
         public DateTime OccurrenceEnd { get; set; }
+        public int Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
         public List<RecommendationDto> Recommendations { get; set; } = new List<RecommendationDto>();
     }
 }

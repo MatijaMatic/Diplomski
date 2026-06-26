@@ -4,9 +4,9 @@ using System.Linq;
 using NetworkAttackDetectionPlatform.Application.DTOs;
 using NetworkAttackDetectionPlatform.Application.Interfaces;
 using NetworkAttackDetectionPlatform.Domain.Entities;
+using NetworkAttackDetectionPlatform.Domain.Enums;
 using NetworkAttackDetectionPlatform.Domain.Interfaces;
 using NetworkAttackDetectionPlatform.Domain.ValueObjects;
-using NetworkAttackDetectionPlatform.Domain.Enums;
 
 namespace NetworkAttackDetectionPlatform.Application.Services
 {
@@ -77,6 +77,82 @@ namespace NetworkAttackDetectionPlatform.Application.Services
             _repo.Update(existing);
         }
 
+        public PagedResult<AttackDetectionDto> GetDetections(int pageNumber, int pageSize, int? attackType = null, int? severity = null, DateTime? startDate = null, DateTime? endDate = null, double? minConfidence = null, double? maxConfidence = null)
+        {
+            if (pageNumber <= 0) pageNumber = 1;
+            if (pageSize <= 0) pageSize = 50;
+
+            var query = _repo.GetAll().AsQueryable();
+
+            // Filtering logic belongs to Application layer
+            if (attackType.HasValue)
+                query = query.Where(a => (int)a.AttackType == attackType.Value);
+
+            if (severity.HasValue)
+                query = query.Where(a => (int)a.Severity == severity.Value);
+
+            if (startDate.HasValue)
+                query = query.Where(a => a.Occurrence.End >= startDate.Value.ToUniversalTime());
+
+            if (endDate.HasValue)
+                query = query.Where(a => a.Occurrence.Start <= endDate.Value.ToUniversalTime());
+
+            if (minConfidence.HasValue)
+                query = query.Where(a => a.Confidence.Value >= minConfidence.Value);
+
+            if (maxConfidence.HasValue)
+                query = query.Where(a => a.Confidence.Value <= maxConfidence.Value);
+
+            var total = query.Count();
+            var items = query.OrderByDescending(a => a.Occurrence.End)
+                             .Skip((pageNumber - 1) * pageSize)
+                             .Take(pageSize)
+                             .Select(MapToDto)
+                             .ToList();
+
+            return new PagedResult<AttackDetectionDto>
+            {
+                Items = items,
+                TotalCount = total,
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
+        }
+
+        public void SetStatus(Guid id, string statusName)
+        {
+            if (string.IsNullOrWhiteSpace(statusName)) throw new ArgumentException("Status must be provided.", nameof(statusName));
+
+            var existing = _repo.GetById(id) ?? throw new InvalidOperationException("AttackDetection not found.");
+
+            if (!Enum.TryParse<DetectionStatusEnum>(statusName, ignoreCase: true, out var status))
+                throw new ArgumentException("Invalid status value.", nameof(statusName));
+
+            switch (status)
+            {
+                case DetectionStatusEnum.Analyzed:
+                    existing.MarkAnalyzed();
+                    break;
+                case DetectionStatusEnum.Confirmed:
+                    existing.Confirm();
+                    break;
+                case DetectionStatusEnum.FalsePositive:
+                    existing.MarkFalsePositive();
+                    break;
+                case DetectionStatusEnum.Resolved:
+                    existing.Resolve();
+                    break;
+                case DetectionStatusEnum.New:
+                    // setting back to New is allowed
+                    // no dedicated method, set via reflection? We'll set UpdatedAt and Status directly via internal method not available. Instead, throw unsupported.
+                    throw new InvalidOperationException("Setting status to New is not supported.");
+                default:
+                    throw new ArgumentException("Unsupported status value.", nameof(statusName));
+            }
+
+            _repo.Update(existing);
+        }
+
         private static AttackDetectionDto MapToDto(AttackDetection src)
         {
             return new AttackDetectionDto
@@ -92,6 +168,9 @@ namespace NetworkAttackDetectionPlatform.Application.Services
                 Confidence = src.Confidence.Value,
                 OccurrenceStart = src.Occurrence.Start,
                 OccurrenceEnd = src.Occurrence.End,
+                Status = (int)src.Status,
+                CreatedAt = src.CreatedAt,
+                UpdatedAt = src.UpdatedAt,
                 Recommendations = src.Recommendations.Select(r => new RecommendationDto
                 {
                     Id = r.Id,

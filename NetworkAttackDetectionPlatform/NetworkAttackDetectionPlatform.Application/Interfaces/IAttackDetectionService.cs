@@ -17,5 +17,20 @@ namespace NetworkAttackDetectionPlatform.Application.Interfaces
         void Remove(Guid id);
 
         void Update(AttackDetectionDto dto);
+
+        // New: filtered and paged retrieval
+        PagedResult<AttackDetectionDto> GetDetections(
+            int pageNumber,
+            int pageSize,
+            int? attackType = null,
+            int? severity = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null,
+            double? minConfidence = null,
+            double? maxConfidence = null
+        );
+
+        // New: set status by name
+        void SetStatus(Guid id, string statusName);
     }
 }

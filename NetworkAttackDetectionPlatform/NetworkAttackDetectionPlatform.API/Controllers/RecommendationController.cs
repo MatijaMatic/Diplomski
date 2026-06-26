@@ -16,14 +16,23 @@ namespace NetworkAttackDetectionPlatform.API.Controllers
             _service = service ?? throw new ArgumentNullException(nameof(service));
         }
 
+        /// <summary>
+        /// Gets recommendations for a specific attack detection.
+        /// </summary>
         [HttpGet("by-attack/{attackId:guid}")]
+        [ProducesResponseType(typeof(RecommendationDto[]), 200)]
         public IActionResult GetByAttack(Guid attackId)
         {
             var items = _service.GetByAttackDetectionId(attackId);
             return Ok(items);
         }
 
+        /// <summary>
+        /// Gets a recommendation by id.
+        /// </summary>
         [HttpGet("{id:guid}")]
+        [ProducesResponseType(typeof(RecommendationDto), 200)]
+        [ProducesResponseType(404)]
         public IActionResult GetById(Guid id)
         {
             var item = _service.GetById(id);
@@ -31,7 +40,12 @@ namespace NetworkAttackDetectionPlatform.API.Controllers
             return Ok(item);
         }
 
+        /// <summary>
+        /// Creates a recommendation.
+        /// </summary>
         [HttpPost]
+        [ProducesResponseType(typeof(RecommendationDto), 201)]
+        [ProducesResponseType(400)]
         public IActionResult Create([FromBody] CreateRecommendationDto dto)
         {
             if (dto == null) return BadRequest();

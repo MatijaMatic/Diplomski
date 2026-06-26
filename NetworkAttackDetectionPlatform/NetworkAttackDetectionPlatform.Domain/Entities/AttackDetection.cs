@@ -29,6 +29,12 @@ namespace NetworkAttackDetectionPlatform.Domain.Entities
 
         public TimeRange Occurrence { get; private set; }
 
+        public DetectionStatusEnum Status { get; private set; }
+
+        public DateTime CreatedAt { get; private set; }
+
+        public DateTime UpdatedAt { get; private set; }
+
         private readonly List<Recommendation> _recommendations = new();
         public IReadOnlyCollection<Recommendation> Recommendations => new ReadOnlyCollection<Recommendation>(_recommendations);
 
@@ -56,6 +62,10 @@ namespace NetworkAttackDetectionPlatform.Domain.Entities
             Severity = severity;
             Confidence = confidence ?? throw new ArgumentNullException(nameof(confidence));
             Occurrence = occurrence ?? throw new ArgumentNullException(nameof(occurrence));
+
+            Status = DetectionStatusEnum.New;
+            CreatedAt = DateTime.UtcNow;
+            UpdatedAt = CreatedAt;
         }
 
         public static AttackDetection Create(
@@ -86,6 +96,7 @@ namespace NetworkAttackDetectionPlatform.Domain.Entities
         {
             var recommendation = Recommendation.Create(Id, text);
             _recommendations.Add(recommendation);
+            UpdatedAt = DateTime.UtcNow;
         }
 
         public void RemoveRecommendation(Guid recommendationId)
@@ -95,11 +106,37 @@ namespace NetworkAttackDetectionPlatform.Domain.Entities
                 throw new InvalidOperationException("Recommendation not found.");
 
             _recommendations.Remove(rec);
+            UpdatedAt = DateTime.UtcNow;
         }
 
         public void ReplaceConfidence(ConfidenceScore newScore)
         {
             Confidence = newScore ?? throw new ArgumentNullException(nameof(newScore));
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void MarkAnalyzed()
+        {
+            Status = DetectionStatusEnum.Analyzed;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void Confirm()
+        {
+            Status = DetectionStatusEnum.Confirmed;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void MarkFalsePositive()
+        {
+            Status = DetectionStatusEnum.FalsePositive;
+            UpdatedAt = DateTime.UtcNow;
+        }
+
+        public void Resolve()
+        {
+            Status = DetectionStatusEnum.Resolved;
+            UpdatedAt = DateTime.UtcNow;
         }
     }
 }

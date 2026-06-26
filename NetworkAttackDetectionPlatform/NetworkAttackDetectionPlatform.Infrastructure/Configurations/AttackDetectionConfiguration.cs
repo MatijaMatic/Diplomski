@@ -50,6 +50,11 @@ namespace NetworkAttackDetectionPlatform.Infrastructure.Configurations
             builder.Property(a => a.AttackType).HasColumnName("AttackType");
             builder.Property(a => a.Severity).HasColumnName("Severity");
 
+            // Status and timestamps
+            builder.Property<int>("Status").HasColumnName("Status").IsRequired().HasDefaultValue(0);
+            builder.Property<DateTime>("CreatedAt").HasColumnName("CreatedAt").IsRequired();
+            builder.Property<DateTime>("UpdatedAt").HasColumnName("UpdatedAt").IsRequired();
+
             // Relationships - configure using backing field
             builder.Metadata.FindNavigation("Recommendations")?.SetPropertyAccessMode(PropertyAccessMode.Field);
 
