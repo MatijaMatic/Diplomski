@@ -8,7 +8,7 @@ using NetworkAttackDetectionPlatform.Domain.Interfaces;
 
 namespace NetworkAttackDetectionPlatform.Application.Services
 {
-    internal class RecommendationService : IRecommendationService
+    public class RecommendationService : IRecommendationService
     {
         private readonly IRecommendationRepository _repo;
 

@@ -8,7 +8,7 @@ using NetworkAttackDetectionPlatform.Infrastructure.Data;
 
 namespace NetworkAttackDetectionPlatform.Infrastructure.Repositories
 {
-    internal class AttackDetectionRepository : IAttackDetectionRepository
+    public class AttackDetectionRepository : IAttackDetectionRepository
     {
         private readonly ApplicationDbContext _context;
 

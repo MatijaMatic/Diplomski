@@ -10,7 +10,7 @@ using NetworkAttackDetectionPlatform.Domain.Enums;
 
 namespace NetworkAttackDetectionPlatform.Application.Services
 {
-    internal class AttackDetectionService : IAttackDetectionService
+    public class AttackDetectionService : IAttackDetectionService
     {
         private readonly IAttackDetectionRepository _repo;
 
