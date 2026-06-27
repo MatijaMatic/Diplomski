@@ -1,6 +1,5 @@
 using NetworkAttackDetectionPlatform.Blazor.Components;
 using NetworkAttackDetectionPlatform.Blazor.Services;
-using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,11 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Configure HttpClient for API access - adjust BaseAddress if your API runs on different url
-var apiBase = builder.Configuration["ApiBaseUrl"] ?? "https://localhost:5001/";
+// Register HTTP client for ApiClient (development default)
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {
-    client.BaseAddress = new Uri(apiBase);
+    client.BaseAddress = new Uri("http://localhost");
 });
 
 var app = builder.Build();

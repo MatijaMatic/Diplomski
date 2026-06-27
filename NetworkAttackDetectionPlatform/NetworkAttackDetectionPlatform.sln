@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.Blazor", "NetworkAttackDetectionPlatform.Blazor\NetworkAttackDetectionPlatform.Blazor.csproj", "{FCAA0BE4-626D-418D-BDE3-496D3E35A525}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.MachineLearning", "NetworkAttackDetectionPlatform.MachineLearning\NetworkAttackDetectionPlatform.MachineLearning.csproj", "{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{FCAA0BE4-626D-418D-BDE3-496D3E35A525}.Release|x64.Build.0 = Release|Any CPU
 		{FCAA0BE4-626D-418D-BDE3-496D3E35A525}.Release|x86.ActiveCfg = Release|Any CPU
 		{FCAA0BE4-626D-418D-BDE3-496D3E35A525}.Release|x86.Build.0 = Release|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Debug|x64.Build.0 = Debug|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Debug|x86.Build.0 = Debug|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x64.ActiveCfg = Release|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x64.Build.0 = Release|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x86.ActiveCfg = Release|Any CPU
+		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

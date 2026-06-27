@@ -1,10 +1,14 @@
-namespace NetworkAttackDetectionPlatform.MachineLearning.Training
+namespace NetworkAttackDetectionPlatform.MachineLearning.Training;
+
+public class TrainingOptions
 {
-    public sealed class TrainingOptions
-    {
-        public int NumberOfTrees { get; init; } = 100;
-        public int MaxDepth { get; init; } = 10;
-        public double TestSplitRatio { get; init; } = 0.2;
-        public int RandomSeed { get; init; } = 42;
-    }
+    public string DatasetPath { get; set; } = string.Empty;
+
+    public string ModelOutputPath { get; set; } = string.Empty;
+
+    public int NumberOfTrees { get; set; } = 100;
+
+    public int RandomSeed { get; set; } = 42;
+
+    public double TestSplit { get; set; } = 0.2;
 }

@@ -1,0 +1,57 @@
+@page "/prediction"
+@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
+@rendermode InteractiveServer
+
+<PageTitle>Prediction</PageTitle>
+
+<h3>Network Traffic Prediction</h3>
+
+<div class="mb-3">
+    <label class="form-label">Source IP</label>
+    <input class="form-control" @bind="model.SourceIp" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Destination IP</label>
+    <input class="form-control" @bind="model.DestinationIp" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Source Port</label>
+    <input class="form-control" type="number" @bind="model.SourcePort" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Destination Port</label>
+    <input class="form-control" type="number" @bind="model.DestinationPort" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Protocol</label>
+    <input class="form-control" type="number" @bind="model.Protocol" />
+</div>
+<div class="mb-3">
+    <label class="form-label">Payload Size</label>
+    <input class="form-control" type="number" @bind="model.PayloadSize" />
+</div>
+
+<button class="btn btn-primary" @onclick="Submit">Predict</button>
+
+@if (result != null)
+{
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">Prediction Result</h5>
+            <p>Attack Type: @result.AttackType</p>
+            <p>Severity: @result.Severity</p>
+            <p>Confidence: @result.Confidence</p>
+            <p>Status: @result.Status</p>
+        </div>
+    </div>
+}
+
+@code {
+    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.NetworkTrafficDto model = new();
+    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto? result;
+
+    private async Task Submit()
+    {
+        result = await ApiClient.PredictAsync(model);
+    }
+}

@@ -1,9 +1,12 @@
-namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
+namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction;
+
+public sealed class PredictionResult
 {
-    public sealed class PredictionResult
-    {
-        public string Label { get; init; } = string.Empty;
-        public double Score { get; init; }
-        public bool IsAnomaly { get; init; }
-    }
+    public string Label { get; set; } = string.Empty;
+
+    public double Score { get; set; }
+
+    public bool IsAnomaly { get; set; }
+
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
 }

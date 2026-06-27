@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\NetworkAttackDetectionPlatform.Application\NetworkAttackDetectionPlatform.Application.csproj" />
     <ProjectReference Include="..\NetworkAttackDetectionPlatform.Infrastructure\NetworkAttackDetectionPlatform.Infrastructure.csproj" />
+    <ProjectReference Include="..\NetworkAttackDetectionPlatform.MachineLearning\NetworkAttackDetectionPlatform.MachineLearning.csproj" />
   </ItemGroup>
 
 </Project>

@@ -61,5 +61,12 @@ namespace NetworkAttackDetectionPlatform.Blazor.Services
             if (resp.IsSuccessStatusCode) return true;
             return false;
         }
+
+        public async Task<AttackDetectionDto?> PredictAsync(NetworkTrafficDto dto)
+        {
+            var resp = await _http.PostAsJsonAsync("api/Prediction/predict", dto);
+            resp.EnsureSuccessStatusCode();
+            return await resp.Content.ReadFromJsonAsync<AttackDetectionDto>();
+        }
     }
 }

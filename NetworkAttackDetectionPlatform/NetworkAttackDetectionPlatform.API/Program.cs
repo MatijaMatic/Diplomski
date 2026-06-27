@@ -1,5 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.ML;
 using NetworkAttackDetectionPlatform.Infrastructure.Data;
 using NetworkAttackDetectionPlatform.Domain.Interfaces;
 using NetworkAttackDetectionPlatform.Application.Interfaces;
@@ -7,6 +8,12 @@ using NetworkAttackDetectionPlatform.Infrastructure.Repositories;
 using Microsoft.Extensions.Logging;
 using NetworkAttackDetectionPlatform.API.Middleware;
 using System.Reflection;
+using NetworkAttackDetectionPlatform.MachineLearning.Prediction;
+using NetworkAttackDetectionPlatform.MachineLearning.Training;
+using NetworkAttackDetectionPlatform.MachineLearning.Integration;
+using NetworkAttackDetectionPlatform.MachineLearning.Interfaces;
+using NetworkAttackDetectionPlatform.MachineLearning.Datasets;
+using NetworkAttackDetectionPlatform.MachineLearning.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +43,21 @@ builder.Services.AddScoped<IRecommendationService, NetworkAttackDetectionPlatfor
 // Register Infrastructure repositories directly
 builder.Services.AddScoped<IAttackDetectionRepository, AttackDetectionRepository>();
 builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+
+// Register ML.NET context as singleton
+builder.Services.AddSingleton<MLContext>(sp => new MLContext(seed: 42));
+
+// Register MachineLearning services
+builder.Services.AddScoped<IPredictionService, PredictionService>();
+builder.Services.AddScoped<IModelTrainer, RandomForestTrainer>();
+builder.Services.AddScoped<IAttackPredictionService, AttackPredictionService>();
+builder.Services.AddScoped<IModelManagementService, ModelManagementService>();
+builder.Services.AddScoped<IDatasetLoader, DatasetLoader>();
+
+// Register Training Pipeline services
+builder.Services.AddScoped<ITrainingPipeline, TrainingPipeline>();
+builder.Services.AddScoped<IModelLoader, ModelLoader>();
+builder.Services.AddScoped<IModelSaver, ModelSaver>();
 
 var app = builder.Build();
 

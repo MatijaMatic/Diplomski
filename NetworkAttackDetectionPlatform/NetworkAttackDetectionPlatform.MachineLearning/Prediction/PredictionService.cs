@@ -7,19 +7,51 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
 {
     public class PredictionService : IPredictionService
     {
-        // This service will wrap a persisted model and expose a prediction API.
-        // No model is loaded or trained at this phase; methods throw until implemented.
-
+        // Deterministic dummy prediction implementation based on available features
         public Task<PredictionResult> PredictAsync(FeatureVector features)
         {
-            // Placeholder implementation -- real implementation will deserialize model and run inference
-            var result = new PredictionResult { Label = "Unknown", Score = 0.0, IsAnomaly = false };
+            double score = 0.0;
+            bool isAnomaly = false;
+            string label = "Normal";
+
+            if (features?.Features != null)
+            {
+                // Prefer PayloadSize if available
+                if (features.Features.TryGetValue("PayloadSize", out var payloadObj) && payloadObj != null)
+                {
+                    if (payloadObj is int payloadInt)
+                    {
+                        score = (double)(payloadInt % 101); // 0..100
+                    }
+                    else if (int.TryParse(payloadObj.ToString(), out var p))
+                    {
+                        score = (double)(p % 101);
+                    }
+                }
+                else if (features.Features.TryGetValue("SourceIp", out var ipObj) && ipObj != null)
+                {
+                    // Fallback: stable hash-based score
+                    var s = ipObj.ToString() ?? string.Empty;
+                    score = (double)(System.Math.Abs(s.GetHashCode()) % 101);
+                }
+            }
+
+            isAnomaly = score > 80.0;
+            label = isAnomaly ? "DDoS" : "Normal";
+
+            var result = new PredictionResult
+            {
+                Label = label,
+                Score = score,
+                IsAnomaly = isAnomaly
+            };
+
             return Task.FromResult(result);
         }
 
         public Task<IList<PredictionResult>> PredictBatchAsync(IEnumerable<FeatureVector> features)
         {
-            var list = features.Select(f => new PredictionResult { Label = "Unknown", Score = 0.0, IsAnomaly = false }).ToList();
+            var list = features.Select(f => PredictAsync(f).GetAwaiter().GetResult()).ToList();
             return Task.FromResult((IList<PredictionResult>)list);
         }
     }
