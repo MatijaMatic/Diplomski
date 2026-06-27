@@ -39,5 +39,20 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Models
         public string Description { get; set; } = string.Empty;
 
         public Dictionary<string, string> HyperParameters { get; set; } = new Dictionary<string, string>();
+
+        // CICIDS2017-specific metadata
+        public string DatasetVersion { get; set; } = string.Empty;
+
+        public int FeatureCount { get; set; }
+
+        public int OriginalLabelCount { get; set; }
+
+        public int NormalizedLabelCount { get; set; }
+
+        public string PreprocessingConfig { get; set; } = string.Empty;
+
+        public bool NormalizationApplied { get; set; }
+
+        public bool LabelMappingApplied { get; set; }
     }
 }

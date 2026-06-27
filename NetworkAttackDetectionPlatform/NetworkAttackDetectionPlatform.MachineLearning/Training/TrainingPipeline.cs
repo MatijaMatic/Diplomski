@@ -5,9 +5,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ML;
 using Microsoft.ML.Data;
+using NetworkAttackDetectionPlatform.MachineLearning.Data;
 using NetworkAttackDetectionPlatform.MachineLearning.Datasets;
 using NetworkAttackDetectionPlatform.MachineLearning.Interfaces;
 using NetworkAttackDetectionPlatform.MachineLearning.Models;
+using NetworkAttackDetectionPlatform.MachineLearning.Preprocessing;
 
 namespace NetworkAttackDetectionPlatform.MachineLearning.Training
 {
@@ -20,6 +22,10 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
         private readonly IDatasetLoader _datasetLoader;
         private readonly IModelSaver _modelSaver;
         private readonly MLContext _mlContext;
+        private readonly CsvDatasetReader _csvReader;
+        private readonly DatasetValidationService _validationService;
+        private readonly LabelMapper _labelMapper;
+        private readonly PreprocessingPipeline _preprocessingPipeline;
 
         public TrainingPipeline(
             IDatasetLoader datasetLoader,
@@ -29,6 +35,12 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
             _datasetLoader = datasetLoader ?? throw new ArgumentNullException(nameof(datasetLoader));
             _modelSaver = modelSaver ?? throw new ArgumentNullException(nameof(modelSaver));
             _mlContext = mlContext ?? throw new ArgumentNullException(nameof(mlContext));
+
+            // Initialize CICIDS2017-specific components
+            _csvReader = new CsvDatasetReader();
+            _validationService = new DatasetValidationService();
+            _labelMapper = new LabelMapper();
+            _preprocessingPipeline = new PreprocessingPipeline(_mlContext);
         }
 
         /// <summary>
@@ -50,35 +62,72 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
 
             try
             {
-                // Step 1: Load dataset
-                var dataset = await LoadDatasetAsync(options.DatasetPath).ConfigureAwait(false);
-                result.Message = $"Loaded dataset: {dataset.Name}";
+                // Step 1: Load CICIDS2017 dataset from CSV
+                Console.WriteLine($"Loading CICIDS2017 dataset from: {options.DatasetPath}");
+                var cicidsData = await _csvReader.ReadAsync(options.DatasetPath, skipHeader: true).ConfigureAwait(false);
+                var dataList = cicidsData.ToList();
+                Console.WriteLine($"Loaded {dataList.Count} rows from CSV.");
 
-                // Step 2: Load data into ML.NET DataView
-                var dataView = LoadIntoMLContext(dataset);
+                // Step 2: Validate dataset quality
+                if (options.ValidateDataset)
+                {
+                    Console.WriteLine("Validating dataset...");
+                    var validationReport = _validationService.Validate(dataList);
+                    Console.WriteLine(validationReport.GetSummary());
 
-                // Step 3: Split into training and validation sets
+                    if (!validationReport.IsValid)
+                    {
+                        result.Success = false;
+                        result.Message = $"Dataset validation failed: {string.Join("; ", validationReport.Errors)}";
+                        return result;
+                    }
+
+                    if (validationReport.InvalidRows > dataList.Count * options.ValidationFailureThreshold)
+                    {
+                        result.Success = false;
+                        result.Message = $"Too many invalid rows: {validationReport.InvalidRows}/{dataList.Count} ({(double)validationReport.InvalidRows / dataList.Count:P2})";
+                        return result;
+                    }
+                }
+
+                // Step 3: Apply label mapping (15 ? 8 classes)
+                if (options.ApplyLabelMapping)
+                {
+                    Console.WriteLine("Applying label mapping (15 ? 8 normalized categories)...");
+                    foreach (var row in dataList)
+                    {
+                        row.Label = _labelMapper.MapLabel(row.Label);
+                    }
+                    Console.WriteLine($"Label mapping complete. Categories: {string.Join(", ", _labelMapper.GetNormalizedCategories())}");
+                }
+
+                // Step 4: Load data into ML.NET DataView
+                var dataView = _mlContext.Data.LoadFromEnumerable(dataList);
+                Console.WriteLine($"Loaded {dataList.Count} samples into ML.NET DataView.");
+
+                // Step 5: Split into training and validation sets
                 var (trainSet, testSet) = SplitData(dataView, options.TestSplit, options.RandomSeed);
                 result.TrainingSamplesCount = (int)trainSet.GetRowCount();
                 result.ValidationSamplesCount = (int)testSet.GetRowCount();
+                Console.WriteLine($"Train/Test split: {result.TrainingSamplesCount}/{result.ValidationSamplesCount}");
 
-                // Step 4: Build preprocessing and training pipeline
+                // Step 6: Build preprocessing and training pipeline
                 var trainingPipeline = BuildTrainingPipeline(options);
 
-                // Step 5: Train the model
+                // Step 7: Train the model
                 var trainedModel = TrainModel(trainingPipeline, trainSet);
 
-                // Step 6: Evaluate on validation set
+                // Step 8: Evaluate on validation set
                 var metrics = EvaluateModel(trainedModel, testSet);
                 result.ValidationAccuracy = metrics.MicroAccuracy;
                 result.Precision = metrics.MacroAccuracy; // Using MacroAccuracy as proxy
                 result.Recall = metrics.LogLoss > 0 ? 1.0 - metrics.LogLoss : 0.0; // Placeholder
                 result.F1Score = CalculateF1Score(result.Precision, result.Recall);
 
-                // Step 7: Save model and metadata
+                // Step 9: Save model and metadata
                 if (!string.IsNullOrWhiteSpace(options.ModelOutputPath))
                 {
-                    await SaveModelAsync(trainedModel, dataView.Schema, options, metrics).ConfigureAwait(false);
+                    await SaveModelAsync(trainedModel, dataView.Schema, options, metrics, dataList.Count).ConfigureAwait(false);
                     result.ModelPath = options.ModelOutputPath;
 
                     if (File.Exists(options.ModelOutputPath))
@@ -88,8 +137,8 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
                     }
                 }
 
-                // Step 8: Extract class labels
-                result.ClassLabels = ExtractClassLabels(dataView);
+                // Step 10: Extract class labels
+                result.ClassLabels = ExtractClassLabels();
 
                 stopwatch.Stop();
                 result.TrainingDuration = stopwatch.Elapsed;
@@ -107,27 +156,6 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
             return result;
         }
 
-        private async Task<Dataset> LoadDatasetAsync(string path)
-        {
-            var dataset = await _datasetLoader.LoadAsync(path).ConfigureAwait(false);
-
-            if (_datasetLoader is DatasetLoader loader)
-            {
-                Console.WriteLine($"Loaded {loader.LoadedSamplesCount} samples, skipped {loader.SkippedSamplesCount} invalid rows.");
-            }
-
-            return dataset;
-        }
-
-        private IDataView LoadIntoMLContext(Dataset dataset)
-        {
-            // For now, we'll use ML.NET's LoadFromEnumerable with TrainingData
-            // In a real implementation, you'd map dataset.Rows to TrainingData instances
-            // This is a placeholder - real implementation will depend on dataset structure
-            var trainingData = new TrainingData[] { }; // Placeholder
-            return _mlContext.Data.LoadFromEnumerable(trainingData);
-        }
-
         private (IDataView TrainSet, IDataView TestSet) SplitData(IDataView data, double testFraction, int seed)
         {
             var split = _mlContext.Data.TrainTestSplit(data, testFraction: testFraction, seed: seed);
@@ -136,23 +164,31 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
 
         private IEstimator<ITransformer> BuildTrainingPipeline(TrainingOptions options)
         {
-            // Build Random Forest pipeline using FastTree (boosted decision trees) with One-vs-All strategy for multiclass classification
-            // FastTree uses decision trees ensemble which provides Random Forest-like behavior
-            var pipeline = _mlContext.Transforms.Conversion.MapValueToKey("Label")
-                .Append(_mlContext.Transforms.Concatenate("Features",
-                    "SourcePort", "DestinationPort", "Protocol", "PayloadSize",
-                    "PacketCount", "Duration", "BytesTransferred"))
-                .Append(_mlContext.MulticlassClassification.Trainers.OneVersusAll(
-                    binaryEstimator: _mlContext.BinaryClassification.Trainers.FastTree(
-                        numberOfLeaves: 20,
-                        numberOfTrees: options.NumberOfTrees,
-                        minimumExampleCountPerLeaf: 10
-                    ),
-                    labelColumnName: "Label"
-                ))
-                .Append(_mlContext.Transforms.Conversion.MapKeyToValue("PredictedLabel"));
+            // Use CICIDS2017 preprocessing pipeline
+            var preprocessingOptions = new PreprocessingOptions
+            {
+                EnableNormalization = options.EnableNormalization,
+                ApplyLabelMapping = options.ApplyLabelMapping
+            };
 
-            return pipeline;
+            var preprocessor = _preprocessingPipeline.BuildPipeline(preprocessingOptions);
+
+            // Add FastTree trainer with One-vs-All strategy for multiclass classification
+            var trainer = _mlContext.MulticlassClassification.Trainers.OneVersusAll(
+                binaryEstimator: _mlContext.BinaryClassification.Trainers.FastTree(
+                    numberOfLeaves: 20,
+                    numberOfTrees: options.NumberOfTrees,
+                    minimumExampleCountPerLeaf: 10
+                ),
+                labelColumnName: FeatureConfiguration.LabelColumnName
+            );
+
+            // Combine preprocessing and training
+            var fullPipeline = preprocessor
+                .Append(trainer)
+                .Append(_mlContext.Transforms.Conversion.MapKeyToValue(FeatureConfiguration.PredictedLabelColumnName));
+
+            return fullPipeline;
         }
 
         private ITransformer TrainModel(IEstimator<ITransformer> pipeline, IDataView trainingData)
@@ -165,10 +201,10 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
         {
             Console.WriteLine("Evaluating model...");
             var predictions = model.Transform(testData);
-            return _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: "Label");
+            return _mlContext.MulticlassClassification.Evaluate(predictions, labelColumnName: FeatureConfiguration.LabelColumnName);
         }
 
-        private async Task SaveModelAsync(ITransformer model, DataViewSchema schema, TrainingOptions options, MulticlassClassificationMetrics metrics)
+        private async Task SaveModelAsync(ITransformer model, DataViewSchema schema, TrainingOptions options, MulticlassClassificationMetrics metrics, int totalSamples)
         {
             await _modelSaver.SaveModelAsync(model, schema, options.ModelOutputPath).ConfigureAwait(false);
 
@@ -176,18 +212,37 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
             var metadata = new ModelMetadata
             {
                 ModelName = "NetworkAttackClassifier",
-                Version = "1.0.0",
+                Version = "2.0.0",
                 CreatedAt = DateTime.UtcNow,
                 TrainedAt = DateTime.UtcNow,
                 Algorithm = "Random Forest (FastTree)",
+                TrainingSamplesCount = (int)(totalSamples * (1.0 - options.TestSplit)),
+                ValidationSamplesCount = (int)(totalSamples * options.TestSplit),
                 Accuracy = metrics.MicroAccuracy,
                 Precision = metrics.MacroAccuracy,
                 Recall = metrics.LogLoss > 0 ? 1.0 - metrics.LogLoss : 0.0,
                 F1Score = CalculateF1Score(metrics.MacroAccuracy, metrics.LogLoss > 0 ? 1.0 - metrics.LogLoss : 0.0),
-                DatasetName = Path.GetFileNameWithoutExtension(options.DatasetPath)
+                ClassLabels = ExtractClassLabels(),
+                DatasetName = options.DatasetName,
+                DatasetVersion = options.DatasetVersion,
+                FeatureCount = FeatureConfiguration.FeatureCount,
+                OriginalLabelCount = 15,
+                NormalizedLabelCount = _labelMapper.GetCategoryCount(),
+                PreprocessingConfig = $"Normalization: {options.EnableNormalization}, LabelMapping: {options.ApplyLabelMapping}",
+                NormalizationApplied = options.EnableNormalization,
+                LabelMappingApplied = options.ApplyLabelMapping,
+                HyperParameters = new Dictionary<string, string>
+                {
+                    ["NumberOfTrees"] = options.NumberOfTrees.ToString(),
+                    ["RandomSeed"] = options.RandomSeed.ToString(),
+                    ["TestSplit"] = options.TestSplit.ToString(),
+                    ["NumberOfLeaves"] = "20",
+                    ["MinimumExampleCountPerLeaf"] = "10"
+                }
             };
 
             await _modelSaver.SaveMetadataAsync(metadata, metadataPath).ConfigureAwait(false);
+            Console.WriteLine($"Model and metadata saved to: {options.ModelOutputPath}");
         }
 
         private double CalculateF1Score(double precision, double recall)
@@ -198,10 +253,10 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
             return 2 * (precision * recall) / (precision + recall);
         }
 
-        private string[] ExtractClassLabels(IDataView dataView)
+        private string[] ExtractClassLabels()
         {
-            // This is a placeholder - real implementation would extract unique labels from data
-            return new[] { "Normal", "PortScan", "DDoS", "Malware", "BruteForce", "Phishing", "DataExfiltration" };
+            // Return normalized CICIDS2017 labels (8 categories)
+            return _labelMapper.GetNormalizedCategories().ToArray();
         }
     }
 }
