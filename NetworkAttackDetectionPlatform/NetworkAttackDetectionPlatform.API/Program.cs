@@ -39,6 +39,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register Application services
 builder.Services.AddScoped<IAttackDetectionService, NetworkAttackDetectionPlatform.Application.Services.AttackDetectionService>();
 builder.Services.AddScoped<IRecommendationService, NetworkAttackDetectionPlatform.Application.Services.RecommendationService>();
+builder.Services.AddScoped<IDashboardService, NetworkAttackDetectionPlatform.Application.Services.DashboardService>();
 
 // Register Infrastructure repositories directly
 builder.Services.AddScoped<IAttackDetectionRepository, AttackDetectionRepository>();
