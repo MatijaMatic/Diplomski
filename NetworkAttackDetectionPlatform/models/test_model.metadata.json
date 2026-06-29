@@ -1,0 +1,40 @@
+{
+  "ModelName": "NetworkAttackClassifier",
+  "Version": "2.0.0",
+  "CreatedAt": "2026-06-27T03:02:53.586245Z",
+  "TrainedAt": "2026-06-27T03:02:53.5862749Z",
+  "Algorithm": "Random Forest (FastTree)",
+  "TrainingSamplesCount": 800,
+  "ValidationSamplesCount": 200,
+  "Accuracy": 0.8449197860962567,
+  "Precision": 0.8532091097308488,
+  "Recall": 0.6548637898454326,
+  "F1Score": 0.7409930266447696,
+  "ClassLabels": [
+    "BENIGN",
+    "DDoS",
+    "PortScan",
+    "BruteForce",
+    "Bot",
+    "WebAttack",
+    "Infiltration",
+    "Other"
+  ],
+  "ModelSizeBytes": 0,
+  "DatasetName": "CICIDS2017-Sample",
+  "Description": "",
+  "HyperParameters": {
+    "NumberOfTrees": "25",
+    "RandomSeed": "42",
+    "TestSplit": "0.2",
+    "NumberOfLeaves": "20",
+    "MinimumExampleCountPerLeaf": "10"
+  },
+  "DatasetVersion": "1.0",
+  "FeatureCount": 78,
+  "OriginalLabelCount": 15,
+  "NormalizedLabelCount": 8,
+  "PreprocessingConfig": "Normalization: True, LabelMapping: True",
+  "NormalizationApplied": true,
+  "LabelMappingApplied": true
+}

@@ -8,7 +8,7 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Testing;
 /// </summary>
 public class SmokeTestRunner
 {
-    public static async Task Main(string[] args)
+    public static async Task RunSmokeTestAsync(string[] args)
     {
         Console.WriteLine("CICIDS2017 Training Pipeline Smoke Test Runner");
         Console.WriteLine("============================================");

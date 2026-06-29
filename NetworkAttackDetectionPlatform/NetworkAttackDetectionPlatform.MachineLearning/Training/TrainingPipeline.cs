@@ -107,8 +107,8 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
 
                 // Step 5: Split into training and validation sets
                 var (trainSet, testSet) = SplitData(dataView, options.TestSplit, options.RandomSeed);
-                result.TrainingSamplesCount = (int)trainSet.GetRowCount();
-                result.ValidationSamplesCount = (int)testSet.GetRowCount();
+                result.TrainingSamplesCount = (int)(trainSet.GetRowCount() ?? 0);
+                result.ValidationSamplesCount = (int)(testSet.GetRowCount() ?? 0);
                 Console.WriteLine($"Train/Test split: {result.TrainingSamplesCount}/{result.ValidationSamplesCount}");
 
                 // Step 6: Build preprocessing and training pipeline
