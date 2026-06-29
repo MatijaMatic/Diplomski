@@ -1,0 +1,38 @@
+@using NetworkAttackDetectionPlatform.Blazor.Services.Dtos
+
+<div class="chart-container">
+    <h5 class="chart-title">Attack Timeline (Last @Days Days)</h5>
+    @if (Data == null || !Data.Any())
+    {
+        <p class="text-muted text-center">No data available</p>
+    }
+    else
+    {
+        var maxCount = Data.Max(d => d.Count);
+        <div class="timeline-chart">
+            @foreach (var item in Data)
+            {
+                var heightPercentage = maxCount > 0 ? (item.Count * 100.0 / maxCount) : 0;
+                <div class="timeline-bar">
+                    <div class="bar-column">
+                        <div class="bar-fill" style="height: @(heightPercentage)%">
+                            @if (item.Count > 0)
+                            {
+                                <span class="bar-count">@item.Count</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="bar-date">@DateTime.Parse(item.Date).ToString("MM/dd")</div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<AttackTimelineDto> Data { get; set; } = new();
+
+    [Parameter]
+    public int Days { get; set; } = 7;
+}

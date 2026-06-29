@@ -1,0 +1,23 @@
+<div class="stat-card">
+    <div class="stat-icon @IconClass">
+        <i class="bi @Icon"></i>
+    </div>
+    <div class="stat-content">
+        <div class="stat-value">@Value</div>
+        <div class="stat-label">@Label</div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Value { get; set; } = "0";
+
+    [Parameter]
+    public string Label { get; set; } = "";
+
+    [Parameter]
+    public string Icon { get; set; } = "bi-speedometer";
+
+    [Parameter]
+    public string IconClass { get; set; } = "bg-primary";
+}

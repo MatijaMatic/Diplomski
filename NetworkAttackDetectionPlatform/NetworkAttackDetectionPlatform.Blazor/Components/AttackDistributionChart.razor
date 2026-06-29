@@ -1,0 +1,32 @@
+@using NetworkAttackDetectionPlatform.Blazor.Services.Dtos
+
+<div class="chart-container">
+    <h5 class="chart-title">Attack Type Distribution</h5>
+    @if (Data == null || !Data.Any())
+    {
+        <p class="text-muted text-center">No data available</p>
+    }
+    else
+    {
+        <div class="distribution-bars">
+            @foreach (var item in Data)
+            {
+                var percentage = Total > 0 ? (item.Count * 100.0 / Total) : 0;
+                <div class="bar-item">
+                    <div class="bar-label">@item.AttackType</div>
+                    <div class="bar-wrapper">
+                        <div class="bar-fill" style="width: @(percentage)%"></div>
+                        <span class="bar-value">@item.Count</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public List<AttackDistributionDto> Data { get; set; } = new();
+
+    private int Total => Data?.Sum(d => d.Count) ?? 0;
+}

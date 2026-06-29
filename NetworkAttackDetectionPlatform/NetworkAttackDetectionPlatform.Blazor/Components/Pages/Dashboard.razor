@@ -1,127 +1,145 @@
 @page "/dashboard"
-@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
+@rendermode InteractiveServer
+@using NetworkAttackDetectionPlatform.Blazor.Services
+@using NetworkAttackDetectionPlatform.Blazor.Services.Dtos
+@inject IDashboardApiService DashboardApi
 
-<h3>Dashboard</h3>
+<PageTitle>Dashboard - AI Network Attack Detection</PageTitle>
 
-@if (isLoading)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <div>
-        <p>Total detected attacks: @totalAttacks</p>
-        <p>Unresolved attacks: @unresolvedCount</p>
-
-        <h4>By Status</h4>
-        <ul>
-            @foreach (var kv in statusStats)
-            {
-                <li>@MapStatus(kv.Key): @kv.Value</li>
-            }
-        </ul>
-
-        <h4>Attack Types</h4>
-        <ul>
-            @foreach (var kv in attackTypeStats)
-            {
-                <li>@kv.Key: @kv.Value</li>
-            }
-        </ul>
-
-        <h4>Severity</h4>
-        <ul>
-            @foreach (var kv in severityStats)
-            {
-                <li>@kv.Key: @kv.Value</li>
-            }
-        </ul>
-
-        <h4>Recent Unresolved Detections</h4>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Source</th>
-                    <th>Destination</th>
-                    <th>Attack Type</th>
-                    <th>Severity</th>
-                    <th>Confidence</th>
-                    <th>Status</th>
-                    <th>Time</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var d in recentDetections)
-                {
-                    <tr>
-                        <td>@d.SourceIp:@d.SourcePort</td>
-                        <td>@d.DestinationIp:@d.DestinationPort</td>
-                        <td>@MapAttackType(d.AttackType)</td>
-                        <td>@MapSeverity(d.Severity)</td>
-                        <td>@d.Confidence</td>
-                        <td>@MapStatus(d.Status)</td>
-                        <td>@d.OccurrenceEnd.ToLocalTime()</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div>
+            <h1 class="dashboard-title">AI Network Attack Detection Dashboard</h1>
+            <p class="dashboard-subtitle">Machine Learning based network threat monitoring</p>
+        </div>
+        <button class="btn btn-primary" @onclick="RefreshData" disabled="@isLoading">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
     </div>
-}
+
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading dashboard...</p>
+        </div>
+    }
+    else if (hasError)
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Unable to load dashboard data.</strong> Please ensure the API is running on http://localhost:5067
+        </div>
+    }
+    else
+    {
+        <!-- Statistics Cards -->
+        <div class="stats-grid">
+            <StatisticCard 
+                Value="@(statistics?.TotalAttacks.ToString() ?? "0")" 
+                Label="Total Attacks" 
+                Icon="bi-shield-exclamation"
+                IconClass="bg-primary" />
+
+            <StatisticCard 
+                Value="@(statistics?.AttacksToday.ToString() ?? "0")" 
+                Label="Attacks Today" 
+                Icon="bi-calendar-event"
+                IconClass="bg-success" />
+
+            <StatisticCard 
+                Value="@(statistics?.CriticalAttacks.ToString() ?? "0")" 
+                Label="Critical Attacks" 
+                Icon="bi-exclamation-triangle-fill"
+                IconClass="bg-danger" />
+
+            <StatisticCard 
+                Value="@(FormatConfidence(statistics?.AverageConfidence))" 
+                Label="Avg Confidence" 
+                Icon="bi-speedometer"
+                IconClass="bg-info" />
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-col">
+                <AttackTimelineChart Data="@timeline" Days="7" />
+            </div>
+            <div class="chart-col">
+                <SeverityChart Data="@severityDist" />
+            </div>
+        </div>
+
+        <!-- Attack Distribution -->
+        <div class="chart-full">
+            <AttackDistributionChart Data="@attackDist" />
+        </div>
+
+        <!-- Recent Attacks Table -->
+        <div class="table-section">
+            <h4 class="section-title">
+                <i class="bi bi-clock-history"></i> Recent Attacks
+            </h4>
+            <RecentAttacksTable Attacks="@recentAttacks" />
+        </div>
+    }
+</div>
 
 @code {
     private bool isLoading = true;
-    private int totalAttacks;
-    private int unresolvedCount;
-    private Dictionary<int, int> attackTypeStats = new();
-    private Dictionary<int, int> severityStats = new();
-    private Dictionary<int, int> statusStats = new();
-    private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> recentDetections = new();
+    private bool hasError = false;
+
+    private DashboardStatisticsDto? statistics;
+    private List<RecentAttackDto> recentAttacks = new();
+    private List<AttackTimelineDto> timeline = new();
+    private List<AttackDistributionDto> attackDist = new();
+    private SeverityDistributionDto? severityDist;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadDashboardData();
+    }
+
+    private async Task RefreshData()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        isLoading = true;
+        hasError = false;
+        StateHasChanged();
+
         try
         {
-            var all = await ApiClient.GetAllDetectionsAsync();
-            totalAttacks = all.Count;
-            statusStats = all.GroupBy(a => a.Status).ToDictionary(g => g.Key, g => g.Count());
-            unresolvedCount = all.Count(a => a.Status != 4); // Resolved = 4
-            attackTypeStats = all.GroupBy(a => a.AttackType).ToDictionary(g => g.Key, g => g.Count());
-            severityStats = all.GroupBy(a => a.Severity).ToDictionary(g => g.Key, g => g.Count());
-            recentDetections = all.Where(a => a.Status != 4).OrderByDescending(a => a.OccurrenceEnd).Take(10).ToList();
+            statistics = await DashboardApi.GetStatisticsAsync();
+            recentAttacks = await DashboardApi.GetRecentAttacksAsync(10);
+            timeline = await DashboardApi.GetTimelineAsync(7);
+            attackDist = await DashboardApi.GetAttackDistributionAsync();
+            severityDist = await DashboardApi.GetSeverityDistributionAsync();
+
+            if (statistics == null)
+            {
+                hasError = true;
+            }
+        }
+        catch (Exception)
+        {
+            hasError = true;
         }
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 
-    private string MapAttackType(int t) => t switch
+    private string FormatConfidence(double? confidence)
     {
-        1 => "PortScan",
-        2 => "DDoS",
-        3 => "Malware",
-        4 => "BruteForce",
-        5 => "Phishing",
-        6 => "DataExfiltration",
-        _ => "Unknown"
-    };
-
-    private string MapSeverity(int s) => s switch
-    {
-        1 => "Low",
-        2 => "Medium",
-        3 => "High",
-        4 => "Critical",
-        _ => "Unknown"
-    };
-
-    private string MapStatus(int s) => s switch
-    {
-        0 => "New",
-        1 => "Analyzed",
-        2 => "Confirmed",
-        3 => "FalsePositive",
-        4 => "Resolved",
-        _ => "Unknown"
-    };
+        return confidence.HasValue ? $"{confidence.Value:F1}%" : "0%";
+    }
 }

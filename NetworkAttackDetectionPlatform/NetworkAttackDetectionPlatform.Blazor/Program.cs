@@ -7,10 +7,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register HTTP client for ApiClient (development default)
+// Register HTTP client for ApiClient (development default - API port 5067)
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost");
+    client.BaseAddress = new Uri("http://localhost:5067");
+});
+
+// Register HTTP client for DashboardApiService
+builder.Services.AddHttpClient<IDashboardApiService, DashboardApiService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5067");
 });
 
 var app = builder.Build();

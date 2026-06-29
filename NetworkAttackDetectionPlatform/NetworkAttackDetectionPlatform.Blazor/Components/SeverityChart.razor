@@ -1,0 +1,55 @@
+@using NetworkAttackDetectionPlatform.Blazor.Services.Dtos
+
+<div class="chart-container">
+    <h5 class="chart-title">Severity Distribution</h5>
+    @if (Data == null)
+    {
+        <p class="text-muted text-center">No data available</p>
+    }
+    else
+    {
+        <div class="severity-grid">
+            <div class="severity-item severity-critical">
+                <div class="severity-icon">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div class="severity-info">
+                    <div class="severity-count">@Data.Critical</div>
+                    <div class="severity-label">Critical</div>
+                </div>
+            </div>
+            <div class="severity-item severity-high">
+                <div class="severity-icon">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                </div>
+                <div class="severity-info">
+                    <div class="severity-count">@Data.High</div>
+                    <div class="severity-label">High</div>
+                </div>
+            </div>
+            <div class="severity-item severity-medium">
+                <div class="severity-icon">
+                    <i class="bi bi-info-circle-fill"></i>
+                </div>
+                <div class="severity-info">
+                    <div class="severity-count">@Data.Medium</div>
+                    <div class="severity-label">Medium</div>
+                </div>
+            </div>
+            <div class="severity-item severity-low">
+                <div class="severity-icon">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+                <div class="severity-info">
+                    <div class="severity-count">@Data.Low</div>
+                    <div class="severity-label">Low</div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public SeverityDistributionDto? Data { get; set; }
+}

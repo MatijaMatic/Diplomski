@@ -1,0 +1,104 @@
+@using NetworkAttackDetectionPlatform.Blazor.Services.Dtos
+
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Source IP</th>
+                <th>Destination IP</th>
+                <th>Attack Type</th>
+                <th>Severity</th>
+                <th>Confidence</th>
+                <th>Status</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Attacks == null || !Attacks.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">No recent attacks</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var attack in Attacks)
+                {
+                    <tr>
+                        <td><code>@attack.SourceIp</code></td>
+                        <td><code>@attack.DestinationIp</code></td>
+                        <td>
+                            <span class="badge bg-secondary">@MapAttackType(attack.AttackType)</span>
+                        </td>
+                        <td>
+                            <span class="badge @GetSeverityBadgeClass(attack.Severity)">
+                                @MapSeverity(attack.Severity)
+                            </span>
+                        </td>
+                        <td>@attack.Confidence.ToString("F1")%</td>
+                        <td>
+                            <span class="badge @GetStatusBadgeClass(attack.Status)">
+                                @MapStatus(attack.Status)
+                            </span>
+                        </td>
+                        <td>@attack.Timestamp.ToLocalTime().ToString("g")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter]
+    public List<RecentAttackDto> Attacks { get; set; } = new();
+
+    private string MapAttackType(int type) => type switch
+    {
+        1 => "PortScan",
+        2 => "DDoS",
+        3 => "Malware",
+        4 => "BruteForce",
+        5 => "Phishing",
+        6 => "DataExfiltration",
+        _ => "Unknown"
+    };
+
+    private string MapSeverity(int severity) => severity switch
+    {
+        1 => "Low",
+        2 => "Medium",
+        3 => "High",
+        4 => "Critical",
+        _ => "Unknown"
+    };
+
+    private string MapStatus(int status) => status switch
+    {
+        0 => "New",
+        1 => "Analyzed",
+        2 => "Confirmed",
+        3 => "False Positive",
+        4 => "Resolved",
+        _ => "Unknown"
+    };
+
+    private string GetSeverityBadgeClass(int severity) => severity switch
+    {
+        4 => "bg-danger",
+        3 => "bg-warning text-dark",
+        2 => "bg-info",
+        1 => "bg-success",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusBadgeClass(int status) => status switch
+    {
+        0 => "bg-primary",
+        1 => "bg-info",
+        2 => "bg-warning text-dark",
+        3 => "bg-secondary",
+        4 => "bg-success",
+        _ => "bg-secondary"
+    };
+}
