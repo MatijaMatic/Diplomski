@@ -1,52 +1,684 @@
 @page "/recommendations"
+@rendermode InteractiveServer
 @inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
 
-<h3>Recommendations</h3>
+<PageTitle>Security Recommendations</PageTitle>
 
-@if (isLoading)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Recommendation</th>
-                <th>Attack (source -> dest)</th>
-                <th>Created At</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var r in recommendations)
+<div class="recommendations-container">
+    <!-- Header -->
+    <div class="recommendations-header">
+        <div>
+            <h1 class="recommendations-title">Security Recommendations</h1>
+            <p class="recommendations-subtitle">AI-generated security advice based on detected threats</p>
+        </div>
+        <button class="btn btn-primary" @onclick="LoadRecommendationsAsync" disabled="@isLoading">
+            <i class="bi bi-arrow-clockwise"></i> Refresh
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Error:</strong> @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Loading recommendations...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Statistics Header -->
+        <div class="stats-grid">
+            <StatisticCard 
+                Value="@allRecommendations.Count.ToString()" 
+                Label="Total Recommendations" 
+                Icon="bi-lightbulb"
+                IconClass="bg-primary" />
+
+            <StatisticCard 
+                Value="@GetHighSeverityCount().ToString()" 
+                Label="High Severity" 
+                Icon="bi-exclamation-triangle-fill"
+                IconClass="bg-danger" />
+
+            <StatisticCard 
+                Value="@GetResolvedCount().ToString()" 
+                Label="Resolved" 
+                Icon="bi-check-circle-fill"
+                IconClass="bg-success" />
+
+            <StatisticCard 
+                Value="@FormatConfidence(GetAverageConfidence())" 
+                Label="Avg Confidence" 
+                Icon="bi-speedometer"
+                IconClass="bg-info" />
+        </div>
+
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <h5 class="filters-title"><i class="bi bi-funnel"></i> Filters</h5>
+            <div class="filters-grid">
+                <div class="filter-item">
+                    <label class="form-label">Attack Type</label>
+                    <select @bind="filterAttackType" class="form-select">
+                        <option value="-1">All Types</option>
+                        <option value="0">Unknown</option>
+                        <option value="1">Port Scan</option>
+                        <option value="2">DDoS</option>
+                        <option value="3">Malware</option>
+                        <option value="4">Brute Force</option>
+                        <option value="5">Phishing</option>
+                        <option value="6">Data Exfiltration</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="form-label">Severity</label>
+                    <select @bind="filterSeverity" class="form-select">
+                        <option value="-1">All Severities</option>
+                        <option value="1">Low</option>
+                        <option value="2">Medium</option>
+                        <option value="3">High</option>
+                        <option value="4">Critical</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="form-label">Status</label>
+                    <select @bind="filterStatus" class="form-select">
+                        <option value="-1">All Statuses</option>
+                        <option value="0">New</option>
+                        <option value="1">Analyzed</option>
+                        <option value="2">Confirmed</option>
+                        <option value="3">False Positive</option>
+                        <option value="4">Resolved</option>
+                    </select>
+                </div>
+
+                <div class="filter-item">
+                    <label class="form-label">Search Text</label>
+                    <input type="text" @bind="searchText" class="form-control" placeholder="Search recommendations..." />
+                </div>
+            </div>
+
+            <div class="filters-actions">
+                <button class="btn btn-secondary" @onclick="ClearFilters">
+                    <i class="bi bi-x-circle"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Recommendations Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <h5 class="table-title">
+                    <i class="bi bi-list-ul"></i> Recommendations List
+                </h5>
+                <span class="table-count">Showing @FilteredRecommendations.Count() of @allRecommendations.Count recommendations</span>
+            </div>
+
+            @if (!FilteredRecommendations.Any())
             {
-                <tr>
-                    <td>@r.Text</td>
-                    <td>@(attackLookup.TryGetValue(r.AttackDetectionId, out var atk) ? $"{atk.SourceIp}:{atk.SourcePort} -> {atk.DestinationIp}:{atk.DestinationPort}" : "Unknown")</td>
-                    <td>@r.CreatedAt.ToLocalTime()</td>
-                </tr>
+                <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <h4>No Recommendations Found</h4>
+                    <p>Try adjusting your filters or refresh the data.</p>
+                </div>
             }
-        </tbody>
-    </table>
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Recommendation</th>
+                                <th>Attack Type</th>
+                                <th>Severity</th>
+                                <th>Source IP</th>
+                                <th>Destination IP</th>
+                                <th>Confidence</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rec in FilteredRecommendations)
+                            {
+                                var attack = GetAttack(rec.AttackDetectionId);
+                                <tr>
+                                    <td>
+                                        <div class="recommendation-text">
+                                            @GetTruncatedText(rec.Text, 100)
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (attack != null)
+                                        {
+                                            <span class="badge bg-secondary">@MapAttackType(attack.AttackType)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (attack != null)
+                                        {
+                                            <span class="badge @GetSeverityBadgeClass(attack.Severity)">
+                                                @MapSeverity(attack.Severity)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (attack != null)
+                                        {
+                                            <div class="ip-info">
+                                                <strong>@attack.SourceIp</strong>
+                                                <small class="text-muted">:@attack.SourcePort</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (attack != null)
+                                        {
+                                            <div class="ip-info">
+                                                <strong>@attack.DestinationIp</strong>
+                                                <small class="text-muted">:@attack.DestinationPort</small>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (attack != null)
+                                        {
+                                            <div class="confidence-display">
+                                                <span class="confidence-value">@(attack.Confidence.ToString("F1"))%</span>
+                                                <div class="confidence-bar">
+                                                    <div class="confidence-fill" style="width: @(attack.Confidence.ToString("F1"))%"></div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small>@rec.CreatedAt.ToLocalTime().ToString("g")</small>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-sm btn-info" @onclick="() => ViewRecommendationDetails(rec.Id)" title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            @if (attack != null)
+                                            {
+                                                <button class="btn btn-sm btn-primary" @onclick="() => ViewAttackDetails(attack.Id)" title="View Attack">
+                                                    <i class="bi bi-shield-exclamation"></i>
+                                                </button>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- View Recommendation Details Modal -->
+@if (showRecommendationModal && selectedRecommendation != null)
+{
+    var attack = GetAttack(selectedRecommendation.AttackDetectionId);
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-lightbulb"></i> Recommendation Details
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseRecommendationModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="recommendation-full-text mb-4">
+                        <h6>Recommendation:</h6>
+                        <p class="text-justify">@selectedRecommendation.Text</p>
+                    </div>
+
+                    @if (attack != null)
+                    {
+                        <hr />
+                        <h6 class="mb-3"><i class="bi bi-shield-exclamation"></i> Related Attack Information</h6>
+                        <div class="details-grid">
+                            <div class="detail-item">
+                                <label>Attack Type</label>
+                                <span class="badge bg-secondary">@MapAttackType(attack.AttackType)</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Severity</label>
+                                <span class="badge @GetSeverityBadgeClass(attack.Severity)">
+                                    @MapSeverity(attack.Severity)
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Source IP</label>
+                                <span>@attack.SourceIp:@attack.SourcePort</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Destination IP</label>
+                                <span>@attack.DestinationIp:@attack.DestinationPort</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Protocol</label>
+                                <span>@MapProtocol(attack.Protocol)</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Confidence</label>
+                                <span>@(attack.Confidence.ToString("F2"))%</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Status</label>
+                                <span class="badge @GetStatusBadgeClass(attack.Status)">
+                                    @MapStatus(attack.Status)
+                                </span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Occurrence Start</label>
+                                <span>@attack.OccurrenceStart.ToLocalTime().ToString("g")</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Occurrence End</label>
+                                <span>@attack.OccurrenceEnd.ToLocalTime().ToString("g")</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Created At</label>
+                                <span>@selectedRecommendation.CreatedAt.ToLocalTime().ToString("g")</span>
+                            </div>
+                        </div>
+
+                        @if (attack.Recommendations != null && attack.Recommendations.Count > 1)
+                        {
+                            <hr />
+                            <h6 class="mb-3"><i class="bi bi-list-ul"></i> All Recommendations for this Attack</h6>
+                            <ul class="list-group">
+                                @foreach (var r in attack.Recommendations)
+                                {
+                                    <li class="list-group-item @(r.Id == selectedRecommendation.Id ? "active" : "")">
+                                        <div>
+                                            <p class="mb-1">@r.Text</p>
+                                            <small class="@(r.Id == selectedRecommendation.Id ? "text-white" : "text-muted")">
+                                                Created: @r.CreatedAt.ToLocalTime().ToString("g")
+                                            </small>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    @if (attack != null)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="() => ViewAttackDetails(attack.Id)">
+                            <i class="bi bi-shield-exclamation"></i> View Full Attack Details
+                        </button>
+                    }
+                    <button type="button" class="btn btn-secondary" @onclick="CloseRecommendationModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- View Attack Details Modal -->
+@if (showAttackModal && selectedAttack != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-shield-exclamation"></i> Attack Detection Details
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CloseAttackModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <label>Detection ID</label>
+                            <span>@selectedAttack.Id</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Source IP</label>
+                            <span>@selectedAttack.SourceIp:@selectedAttack.SourcePort</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Destination IP</label>
+                            <span>@selectedAttack.DestinationIp:@selectedAttack.DestinationPort</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Protocol</label>
+                            <span>@MapProtocol(selectedAttack.Protocol)</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Attack Type</label>
+                            <span class="badge bg-secondary">@MapAttackType(selectedAttack.AttackType)</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Severity</label>
+                            <span class="badge @GetSeverityBadgeClass(selectedAttack.Severity)">
+                                @MapSeverity(selectedAttack.Severity)
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Confidence</label>
+                            <span>@(selectedAttack.Confidence.ToString("F2"))%</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Status</label>
+                            <span class="badge @GetStatusBadgeClass(selectedAttack.Status)">
+                                @MapStatus(selectedAttack.Status)
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Occurrence Start</label>
+                            <span>@selectedAttack.OccurrenceStart.ToLocalTime().ToString("g")</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Occurrence End</label>
+                            <span>@selectedAttack.OccurrenceEnd.ToLocalTime().ToString("g")</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Created At</label>
+                            <span>@selectedAttack.CreatedAt.ToLocalTime().ToString("g")</span>
+                        </div>
+                        <div class="detail-item">
+                            <label>Updated At</label>
+                            <span>@selectedAttack.UpdatedAt.ToLocalTime().ToString("g")</span>
+                        </div>
+                    </div>
+
+                    @if (selectedAttack.Recommendations != null && selectedAttack.Recommendations.Any())
+                    {
+                        <div class="recommendations-section mt-4">
+                            <h6><i class="bi bi-lightbulb"></i> Recommendations</h6>
+                            <ul class="list-group">
+                                @foreach (var rec in selectedAttack.Recommendations)
+                                {
+                                    <li class="list-group-item">
+                                        <div>
+                                            <p class="mb-1">@rec.Text</p>
+                                            <small class="text-muted">
+                                                Created: @rec.CreatedAt.ToLocalTime().ToString("g")
+                                            </small>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseAttackModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
     private bool isLoading = true;
-    private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.RecommendationDto> recommendations = new();
+    private string errorMessage = string.Empty;
+
+    private List<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.RecommendationDto> allRecommendations = new();
     private Dictionary<Guid, NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto> attackLookup = new();
+
+    // Filters
+    private int filterAttackType = -1;
+    private int filterSeverity = -1;
+    private int filterStatus = -1;
+    private string searchText = string.Empty;
+
+    // Modals
+    private bool showRecommendationModal = false;
+    private bool showAttackModal = false;
+    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.RecommendationDto? selectedRecommendation;
+    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto? selectedAttack;
+
+    private IEnumerable<NetworkAttackDetectionPlatform.Blazor.Services.Dtos.RecommendationDto> FilteredRecommendations
+    {
+        get
+        {
+            var filtered = allRecommendations.AsEnumerable();
+
+            if (filterAttackType != -1)
+            {
+                filtered = filtered.Where(r =>
+                {
+                    var attack = GetAttack(r.AttackDetectionId);
+                    return attack != null && attack.AttackType == filterAttackType;
+                });
+            }
+
+            if (filterSeverity != -1)
+            {
+                filtered = filtered.Where(r =>
+                {
+                    var attack = GetAttack(r.AttackDetectionId);
+                    return attack != null && attack.Severity == filterSeverity;
+                });
+            }
+
+            if (filterStatus != -1)
+            {
+                filtered = filtered.Where(r =>
+                {
+                    var attack = GetAttack(r.AttackDetectionId);
+                    return attack != null && attack.Status == filterStatus;
+                });
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                filtered = filtered.Where(r => r.Text.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return filtered.OrderByDescending(r => r.CreatedAt);
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadRecommendationsAsync();
+    }
+
+    private async Task LoadRecommendationsAsync()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
         try
         {
             var pagedResult = await ApiClient.GetAllDetectionsAsync();
             var items = pagedResult.Items;
             attackLookup = items.ToDictionary(a => a.Id, a => a);
-            recommendations = items.SelectMany(a => a.Recommendations).OrderByDescending(r => r.CreatedAt).ToList();
+            allRecommendations = items.SelectMany(a => a.Recommendations).OrderByDescending(r => r.CreatedAt).ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load recommendations: {ex.Message}";
         }
         finally
         {
             isLoading = false;
         }
     }
+
+    private void ClearFilters()
+    {
+        filterAttackType = -1;
+        filterSeverity = -1;
+        filterStatus = -1;
+        searchText = string.Empty;
+    }
+
+    private int GetHighSeverityCount()
+    {
+        return allRecommendations.Count(r =>
+        {
+            var attack = GetAttack(r.AttackDetectionId);
+            return attack != null && (attack.Severity == 3 || attack.Severity == 4);
+        });
+    }
+
+    private int GetResolvedCount()
+    {
+        return allRecommendations.Count(r =>
+        {
+            var attack = GetAttack(r.AttackDetectionId);
+            return attack != null && attack.Status == 4;
+        });
+    }
+
+    private double GetAverageConfidence()
+    {
+        var attacksWithRecs = allRecommendations
+            .Select(r => GetAttack(r.AttackDetectionId))
+            .Where(a => a != null)
+            .ToList();
+
+        return attacksWithRecs.Any() ? attacksWithRecs.Average(a => a!.Confidence) : 0;
+    }
+
+    private string FormatConfidence(double confidence)
+    {
+        return $"{confidence:F1}%";
+    }
+
+    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto? GetAttack(Guid attackId)
+    {
+        return attackLookup.TryGetValue(attackId, out var attack) ? attack : null;
+    }
+
+    private string GetTruncatedText(string text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
+            return text;
+
+        return text.Substring(0, maxLength) + "...";
+    }
+
+    private void ViewRecommendationDetails(Guid recommendationId)
+    {
+        selectedRecommendation = allRecommendations.FirstOrDefault(r => r.Id == recommendationId);
+        if (selectedRecommendation != null)
+        {
+            showRecommendationModal = true;
+        }
+    }
+
+    private void CloseRecommendationModal()
+    {
+        showRecommendationModal = false;
+        selectedRecommendation = null;
+    }
+
+    private void ViewAttackDetails(Guid attackId)
+    {
+        CloseRecommendationModal();
+        selectedAttack = GetAttack(attackId);
+        if (selectedAttack != null)
+        {
+            showAttackModal = true;
+        }
+    }
+
+    private void CloseAttackModal()
+    {
+        showAttackModal = false;
+        selectedAttack = null;
+    }
+
+    private string MapAttackType(int t) => t switch
+    {
+        0 => "Unknown",
+        1 => "Port Scan",
+        2 => "DDoS",
+        3 => "Malware",
+        4 => "Brute Force",
+        5 => "Phishing",
+        6 => "Data Exfiltration",
+        _ => "Unknown"
+    };
+
+    private string MapSeverity(int s) => s switch
+    {
+        0 => "Unknown",
+        1 => "Low",
+        2 => "Medium",
+        3 => "High",
+        4 => "Critical",
+        _ => "Unknown"
+    };
+
+    private string MapStatus(int s) => s switch
+    {
+        0 => "New",
+        1 => "Analyzed",
+        2 => "Confirmed",
+        3 => "FalsePositive",
+        4 => "Resolved",
+        _ => "Unknown"
+    };
+
+    private string MapProtocol(int p) => p switch
+    {
+        0 => "Unknown",
+        1 => "TCP",
+        2 => "UDP",
+        3 => "ICMP",
+        4 => "Other",
+        _ => "Unknown"
+    };
+
+    private string GetSeverityBadgeClass(int severity) => severity switch
+    {
+        4 => "bg-danger",
+        3 => "bg-warning text-dark",
+        2 => "bg-info text-dark",
+        1 => "bg-success",
+        _ => "bg-secondary"
+    };
+
+    private string GetStatusBadgeClass(int status) => status switch
+    {
+        0 => "bg-primary",
+        1 => "bg-info",
+        2 => "bg-danger",
+        3 => "bg-warning text-dark",
+        4 => "bg-success",
+        _ => "bg-secondary"
+    };
 }
