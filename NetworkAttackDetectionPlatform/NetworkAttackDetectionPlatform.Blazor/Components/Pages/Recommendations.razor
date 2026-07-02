@@ -39,9 +39,10 @@ else
     {
         try
         {
-            var all = await ApiClient.GetAllDetectionsAsync();
-            attackLookup = all.ToDictionary(a => a.Id, a => a);
-            recommendations = all.SelectMany(a => a.Recommendations).OrderByDescending(r => r.CreatedAt).ToList();
+            var pagedResult = await ApiClient.GetAllDetectionsAsync();
+            var items = pagedResult.Items;
+            attackLookup = items.ToDictionary(a => a.Id, a => a);
+            recommendations = items.SelectMany(a => a.Recommendations).OrderByDescending(r => r.CreatedAt).ToList();
         }
         finally
         {

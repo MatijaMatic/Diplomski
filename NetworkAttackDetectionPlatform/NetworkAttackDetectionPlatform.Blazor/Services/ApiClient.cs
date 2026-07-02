@@ -16,12 +16,12 @@ namespace NetworkAttackDetectionPlatform.Blazor.Services
             _http = http ?? throw new ArgumentNullException(nameof(http));
         }
 
-        public async Task<List<AttackDetectionDto>> GetAllDetectionsAsync()
+        public async Task<PagedResult<AttackDetectionDto>> GetAllDetectionsAsync()
         {
             var resp = await _http.GetAsync("api/AttackDetection");
             resp.EnsureSuccessStatusCode();
-            var dto = await resp.Content.ReadFromJsonAsync<List<AttackDetectionDto>>();
-            return dto ?? new List<AttackDetectionDto>();
+            var pagedResult = await resp.Content.ReadFromJsonAsync<PagedResult<AttackDetectionDto>>();
+            return pagedResult ?? new PagedResult<AttackDetectionDto>();
         }
 
         public async Task<AttackDetectionDto?> GetDetectionByIdAsync(Guid id)
@@ -60,6 +60,12 @@ namespace NetworkAttackDetectionPlatform.Blazor.Services
             var resp = await _http.PutAsJsonAsync($"api/AttackDetection/{id}/status", payload);
             if (resp.IsSuccessStatusCode) return true;
             return false;
+        }
+
+        public async Task<bool> DeleteDetectionAsync(Guid id)
+        {
+            var resp = await _http.DeleteAsync($"api/AttackDetection/{id}");
+            return resp.IsSuccessStatusCode;
         }
 
         public async Task<AttackDetectionDto?> PredictAsync(NetworkTrafficDto dto)
