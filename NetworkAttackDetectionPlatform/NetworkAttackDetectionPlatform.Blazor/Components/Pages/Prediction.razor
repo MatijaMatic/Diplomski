@@ -1,57 +1,469 @@
 @page "/prediction"
-@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
 @rendermode InteractiveServer
+@inject NetworkAttackDetectionPlatform.Blazor.Services.IApiClient ApiClient
 
-<PageTitle>Prediction</PageTitle>
+<PageTitle>AI Attack Prediction</PageTitle>
 
-<h3>Network Traffic Prediction</h3>
-
-<div class="mb-3">
-    <label class="form-label">Source IP</label>
-    <input class="form-control" @bind="model.SourceIp" />
-</div>
-<div class="mb-3">
-    <label class="form-label">Destination IP</label>
-    <input class="form-control" @bind="model.DestinationIp" />
-</div>
-<div class="mb-3">
-    <label class="form-label">Source Port</label>
-    <input class="form-control" type="number" @bind="model.SourcePort" />
-</div>
-<div class="mb-3">
-    <label class="form-label">Destination Port</label>
-    <input class="form-control" type="number" @bind="model.DestinationPort" />
-</div>
-<div class="mb-3">
-    <label class="form-label">Protocol</label>
-    <input class="form-control" type="number" @bind="model.Protocol" />
-</div>
-<div class="mb-3">
-    <label class="form-label">Payload Size</label>
-    <input class="form-control" type="number" @bind="model.PayloadSize" />
-</div>
-
-<button class="btn btn-primary" @onclick="Submit">Predict</button>
-
-@if (result != null)
-{
-    <div class="card mt-3">
-        <div class="card-body">
-            <h5 class="card-title">Prediction Result</h5>
-            <p>Attack Type: @result.AttackType</p>
-            <p>Severity: @result.Severity</p>
-            <p>Confidence: @result.Confidence</p>
-            <p>Status: @result.Status</p>
+<div class="prediction-container">
+    <!-- Header -->
+    <div class="prediction-header">
+        <div>
+            <h1 class="prediction-title">AI Attack Prediction</h1>
+            <p class="prediction-subtitle">Analyze network traffic using Machine Learning</p>
         </div>
     </div>
-}
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>Error:</strong> @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = string.Empty"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i>
+            <strong>Success:</strong> @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = string.Empty"></button>
+        </div>
+    }
+
+    <div class="prediction-layout">
+        <!-- Left Column: Form -->
+        <div class="form-column">
+            <div class="form-card">
+                <h5 class="card-title">
+                    <i class="bi bi-diagram-3"></i> Network Traffic Data
+                </h5>
+                <p class="card-subtitle">Enter the network traffic parameters for analysis</p>
+
+                <form @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+                    <!-- IP Addresses Section -->
+                    <div class="form-section">
+                        <h6 class="section-title">IP Addresses</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Source IP <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control @GetValidationClass(nameof(model.SourceIp))" 
+                                           @bind="model.SourceIp" 
+                                           placeholder="e.g., 192.168.1.100"
+                                           required />
+                                    @if (validationErrors.ContainsKey(nameof(model.SourceIp)))
+                                    {
+                                        <div class="invalid-feedback d-block">
+                                            @validationErrors[nameof(model.SourceIp)]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Destination IP <span class="text-danger">*</span></label>
+                                    <input type="text" 
+                                           class="form-control @GetValidationClass(nameof(model.DestinationIp))" 
+                                           @bind="model.DestinationIp" 
+                                           placeholder="e.g., 10.0.0.50"
+                                           required />
+                                    @if (validationErrors.ContainsKey(nameof(model.DestinationIp)))
+                                    {
+                                        <div class="invalid-feedback d-block">
+                                            @validationErrors[nameof(model.DestinationIp)]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ports Section -->
+                    <div class="form-section">
+                        <h6 class="section-title">Ports</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Source Port <span class="text-danger">*</span></label>
+                                    <input type="number" 
+                                           class="form-control @GetValidationClass(nameof(model.SourcePort))" 
+                                           @bind="model.SourcePort" 
+                                           min="1" 
+                                           max="65535"
+                                           placeholder="1-65535"
+                                           required />
+                                    @if (validationErrors.ContainsKey(nameof(model.SourcePort)))
+                                    {
+                                        <div class="invalid-feedback d-block">
+                                            @validationErrors[nameof(model.SourcePort)]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Destination Port <span class="text-danger">*</span></label>
+                                    <input type="number" 
+                                           class="form-control @GetValidationClass(nameof(model.DestinationPort))" 
+                                           @bind="model.DestinationPort" 
+                                           min="1" 
+                                           max="65535"
+                                           placeholder="1-65535"
+                                           required />
+                                    @if (validationErrors.ContainsKey(nameof(model.DestinationPort)))
+                                    {
+                                        <div class="invalid-feedback d-block">
+                                            @validationErrors[nameof(model.DestinationPort)]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Protocol and Traffic Details -->
+                    <div class="form-section">
+                        <h6 class="section-title">Protocol & Traffic Details</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Protocol <span class="text-danger">*</span></label>
+                                    <select class="form-select @GetValidationClass(nameof(model.Protocol))" 
+                                            @bind="model.Protocol"
+                                            required>
+                                        <option value="0">Unknown</option>
+                                        <option value="1">TCP</option>
+                                        <option value="2">UDP</option>
+                                        <option value="3">ICMP</option>
+                                        <option value="4">Other</option>
+                                    </select>
+                                    @if (validationErrors.ContainsKey(nameof(model.Protocol)))
+                                    {
+                                        <div class="invalid-feedback d-block">
+                                            @validationErrors[nameof(model.Protocol)]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Payload Size (bytes) <span class="text-danger">*</span></label>
+                                    <input type="number" 
+                                           class="form-control @GetValidationClass(nameof(model.PayloadSize))" 
+                                           @bind="model.PayloadSize" 
+                                           min="0"
+                                           placeholder="e.g., 1024"
+                                           required />
+                                    @if (validationErrors.ContainsKey(nameof(model.PayloadSize)))
+                                    {
+                                        <div class="invalid-feedback d-block">
+                                            @validationErrors[nameof(model.PayloadSize)]
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="form-actions">
+                        <button type="submit" 
+                                class="btn btn-primary btn-lg" 
+                                disabled="@isAnalyzing">
+                            @if (isAnalyzing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                                <span>Analyzing...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-cpu me-2"></i>
+                                <span>Analyze Traffic</span>
+                            }
+                        </button>
+                        <button type="button" 
+                                class="btn btn-secondary btn-lg" 
+                                @onclick="ResetForm"
+                                disabled="@isAnalyzing">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>
+                            Reset Form
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Result -->
+        <div class="result-column">
+            @if (predictionResult != null)
+            {
+                <!-- Prediction Result Card -->
+                <div class="result-card">
+                    <h5 class="card-title">
+                        <i class="bi bi-check-circle-fill text-success"></i> Prediction Result
+                    </h5>
+                    <p class="result-timestamp">
+                        <i class="bi bi-clock"></i> Analyzed on @predictionResult.CreatedAt.ToLocalTime().ToString("g")
+                    </p>
+
+                    <!-- Severity Badge -->
+                    <div class="severity-badge-container">
+                        <div class="severity-badge @GetSeverityBadgeClass(predictionResult.Severity)">
+                            <div class="severity-icon">
+                                <i class="bi @GetSeverityIcon(predictionResult.Severity)"></i>
+                            </div>
+                            <div class="severity-text">
+                                <div class="severity-level">@MapSeverity(predictionResult.Severity)</div>
+                                <div class="severity-type">@MapAttackType(predictionResult.AttackType)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Result Details -->
+                    <div class="result-details">
+                        <div class="result-detail-item">
+                            <label>Attack Type</label>
+                            <span class="badge bg-secondary">@MapAttackType(predictionResult.AttackType)</span>
+                        </div>
+                        <div class="result-detail-item">
+                            <label>Severity Level</label>
+                            <span class="badge @GetSeverityBadgeClass(predictionResult.Severity)">
+                                @MapSeverity(predictionResult.Severity)
+                            </span>
+                        </div>
+                        <div class="result-detail-item">
+                            <label>Status</label>
+                            <span class="badge @GetStatusBadgeClass(predictionResult.Status)">
+                                @MapStatus(predictionResult.Status)
+                            </span>
+                        </div>
+                        <div class="result-detail-item">
+                            <label>Detection ID</label>
+                            <span class="text-monospace">@predictionResult.Id.ToString().Substring(0, 8)...</span>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Score -->
+                    <div class="confidence-section">
+                        <div class="confidence-header">
+                            <span class="confidence-label">Confidence Score</span>
+                            <span class="confidence-value">@(predictionResult.Confidence.ToString("F1"))%</span>
+                        </div>
+                        <div class="confidence-bar-large">
+                            <div class="confidence-fill-large" 
+                                 style="width: @(predictionResult.Confidence.ToString("F1"))%">
+                            </div>
+                        </div>
+                        <div class="confidence-description">
+                            @GetConfidenceDescription(predictionResult.Confidence)
+                        </div>
+                    </div>
+
+                    <!-- Recommendations Count -->
+                    @if (predictionResult.Recommendations != null && predictionResult.Recommendations.Any())
+                    {
+                        <div class="recommendations-count">
+                            <i class="bi bi-lightbulb-fill text-warning"></i>
+                            <span>@predictionResult.Recommendations.Count recommendation@(predictionResult.Recommendations.Count > 1 ? "s" : "") generated</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Recommendations Card -->
+                @if (predictionResult.Recommendations != null && predictionResult.Recommendations.Any())
+                {
+                    <div class="recommendations-card">
+                        <h5 class="card-title">
+                            <i class="bi bi-lightbulb"></i> Security Recommendations
+                        </h5>
+                        <p class="card-subtitle">AI-generated mitigation strategies</p>
+
+                        <ul class="recommendations-list">
+                            @for (int i = 0; i < predictionResult.Recommendations.Count; i++)
+                            {
+                                var rec = predictionResult.Recommendations[i];
+                                <li class="recommendation-item">
+                                    <div class="recommendation-number">@(i + 1)</div>
+                                    <div class="recommendation-content">
+                                        <i class="bi bi-shield-check recommendation-icon"></i>
+                                        <p>@rec.Text</p>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- Empty State -->
+                <div class="empty-result-state">
+                    <i class="bi bi-cpu"></i>
+                    <h4>No Prediction Yet</h4>
+                    <p>Fill out the form and click "Analyze Traffic" to get ML-based attack predictions.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
 
 @code {
     private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.NetworkTrafficDto model = new();
-    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto? result;
+    private NetworkAttackDetectionPlatform.Blazor.Services.Dtos.AttackDetectionDto? predictionResult;
 
-    private async Task Submit()
+    private bool isAnalyzing = false;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+    private Dictionary<string, string> validationErrors = new();
+
+    private async Task HandleSubmit()
     {
-        result = await ApiClient.PredictAsync(model);
+        if (!ValidateForm())
+            return;
+
+        isAnalyzing = true;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            model.Timestamp = DateTime.UtcNow;
+            predictionResult = await ApiClient.PredictAsync(model);
+
+            if (predictionResult != null)
+            {
+                successMessage = "Traffic analyzed successfully! Prediction result is displayed.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to analyze traffic: {ex.Message}";
+            predictionResult = null;
+        }
+        finally
+        {
+            isAnalyzing = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        validationErrors.Clear();
+
+        if (string.IsNullOrWhiteSpace(model.SourceIp))
+            validationErrors[nameof(model.SourceIp)] = "Source IP is required";
+        else if (!IsValidIp(model.SourceIp))
+            validationErrors[nameof(model.SourceIp)] = "Invalid IP address format";
+
+        if (string.IsNullOrWhiteSpace(model.DestinationIp))
+            validationErrors[nameof(model.DestinationIp)] = "Destination IP is required";
+        else if (!IsValidIp(model.DestinationIp))
+            validationErrors[nameof(model.DestinationIp)] = "Invalid IP address format";
+
+        if (model.SourcePort < 1 || model.SourcePort > 65535)
+            validationErrors[nameof(model.SourcePort)] = "Port must be between 1 and 65535";
+
+        if (model.DestinationPort < 1 || model.DestinationPort > 65535)
+            validationErrors[nameof(model.DestinationPort)] = "Port must be between 1 and 65535";
+
+        if (model.PayloadSize < 0)
+            validationErrors[nameof(model.PayloadSize)] = "Payload size cannot be negative";
+
+        return !validationErrors.Any();
+    }
+
+    private bool IsValidIp(string ip)
+    {
+        return System.Net.IPAddress.TryParse(ip, out _);
+    }
+
+    private string GetValidationClass(string fieldName)
+    {
+        return validationErrors.ContainsKey(fieldName) ? "is-invalid" : "";
+    }
+
+    private void ResetForm()
+    {
+        model = new NetworkAttackDetectionPlatform.Blazor.Services.Dtos.NetworkTrafficDto();
+        predictionResult = null;
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+        validationErrors.Clear();
+    }
+
+    private string MapAttackType(int t) => t switch
+    {
+        0 => "Unknown",
+        1 => "Port Scan",
+        2 => "DDoS",
+        3 => "Malware",
+        4 => "Brute Force",
+        5 => "Phishing",
+        6 => "Data Exfiltration",
+        _ => "Unknown"
+    };
+
+    private string MapSeverity(int s) => s switch
+    {
+        0 => "Unknown",
+        1 => "Low",
+        2 => "Medium",
+        3 => "High",
+        4 => "Critical",
+        _ => "Unknown"
+    };
+
+    private string MapStatus(int s) => s switch
+    {
+        0 => "New",
+        1 => "Analyzed",
+        2 => "Confirmed",
+        3 => "FalsePositive",
+        4 => "Resolved",
+        _ => "Unknown"
+    };
+
+    private string GetSeverityBadgeClass(int severity) => severity switch
+    {
+        4 => "severity-critical",
+        3 => "severity-high",
+        2 => "severity-medium",
+        1 => "severity-low",
+        _ => "severity-unknown"
+    };
+
+    private string GetSeverityIcon(int severity) => severity switch
+    {
+        4 => "bi-exclamation-triangle-fill",
+        3 => "bi-exclamation-circle-fill",
+        2 => "bi-info-circle-fill",
+        1 => "bi-check-circle-fill",
+        _ => "bi-question-circle-fill"
+    };
+
+    private string GetStatusBadgeClass(int status) => status switch
+    {
+        0 => "bg-primary",
+        1 => "bg-info",
+        2 => "bg-danger",
+        3 => "bg-warning text-dark",
+        4 => "bg-success",
+        _ => "bg-secondary"
+    };
+
+    private string GetConfidenceDescription(double confidence)
+    {
+        return confidence switch
+        {
+            >= 90 => "Very high confidence - Immediate action recommended",
+            >= 75 => "High confidence - Investigation recommended",
+            >= 50 => "Moderate confidence - Monitor closely",
+            >= 25 => "Low confidence - May require additional analysis",
+            _ => "Very low confidence - Manual verification needed"
+        };
     }
 }
