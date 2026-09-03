@@ -1,0 +1,35 @@
+@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="alert alert-@Type alert-dismissible fade show" role="alert">
+        <i class="bi @GetIcon()"></i>
+        @if (!string.IsNullOrWhiteSpace(Title))
+        {
+            <strong>@Title</strong>
+        }
+        @Message
+        <button type="button" class="btn-close" @onclick="OnDismiss" aria-label="Close"></button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Type { get; set; } = "info";
+
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public string Message { get; set; } = "";
+
+    [Parameter]
+    public EventCallback OnDismiss { get; set; }
+
+    private string GetIcon() => Type switch
+    {
+        "danger" => "bi-exclamation-triangle-fill",
+        "warning" => "bi-exclamation-circle-fill",
+        "success" => "bi-check-circle-fill",
+        "info" => "bi-info-circle-fill",
+        _ => "bi-info-circle-fill"
+    };
+}

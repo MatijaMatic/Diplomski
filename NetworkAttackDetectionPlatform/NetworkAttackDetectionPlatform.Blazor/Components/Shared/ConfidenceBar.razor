@@ -1,0 +1,13 @@
+@using NetworkAttackDetectionPlatform.Blazor.Utils
+
+<div class="confidence-display">
+    <span class="confidence-value">@AttackDetectionHelpers.FormatConfidence(Confidence)</span>
+    <div class="confidence-bar">
+        <div class="confidence-fill" style="width: @AttackDetectionHelpers.FormatConfidence(Confidence)"></div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public double Confidence { get; set; }
+}

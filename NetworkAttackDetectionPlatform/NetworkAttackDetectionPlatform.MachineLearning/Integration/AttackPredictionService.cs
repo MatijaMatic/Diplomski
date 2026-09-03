@@ -29,21 +29,21 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Integration
 
             var pred = await _inner.PredictAsync(fv).ConfigureAwait(false);
 
-            // Map PredictionResult to AttackClassificationResultDto. Use placeholders if unknown.
+            var confidence = pred?.Score ?? 0.0;
+
+            // Map textual label to AttackType enum using utility mapper
+            var mappedAttackType = NetworkAttackDetectionPlatform.MachineLearning.Utilities.LabelToAttackTypeMapper.MapLabelToAttackType(pred?.Label ?? string.Empty);
+
+            var severity = NetworkAttackDetectionPlatform.MachineLearning.Utilities.LabelToAttackTypeMapper.MapConfidenceToSeverity(confidence, mappedAttackType);
+
             var dto = new AttackClassificationResultDto
             {
                 Id = System.Guid.NewGuid(),
-                AttackType = 0,
-                Severity = 0,
-                Confidence = pred?.Score ?? 0.0,
+                AttackType = (int)mappedAttackType,
+                Severity = severity,
+                Confidence = confidence,
                 DetectedAt = System.DateTime.UtcNow
             };
-
-            // Try to map label if numeric encoded in Label
-            if (!string.IsNullOrWhiteSpace(pred?.Label) && int.TryParse(pred.Label, out var t))
-            {
-                dto.AttackType = t;
-            }
 
             return dto;
         }

@@ -1,0 +1,10 @@
+@using NetworkAttackDetectionPlatform.Blazor.Utils
+
+<span class="badge @AttackDetectionHelpers.GetStatusBadgeClass(Status)">
+    @AttackDetectionHelpers.MapStatus(Status)
+</span>
+
+@code {
+    [Parameter]
+    public int Status { get; set; }
+}

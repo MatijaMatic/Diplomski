@@ -1,0 +1,10 @@
+@using NetworkAttackDetectionPlatform.Blazor.Utils
+
+<span class="badge @AttackDetectionHelpers.GetSeverityBadgeClass(Severity)">
+    @AttackDetectionHelpers.MapSeverity(Severity)
+</span>
+
+@code {
+    [Parameter]
+    public int Severity { get; set; }
+}

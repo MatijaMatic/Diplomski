@@ -49,7 +49,9 @@ builder.Services.AddScoped<IRecommendationRepository, RecommendationRepository>(
 builder.Services.AddSingleton<MLContext>(sp => new MLContext(seed: 42));
 
 // Register MachineLearning services
-builder.Services.AddScoped<IPredictionService, PredictionService>();
+// Keep deterministic PredictionService registered so the model-backed service can use it as a fallback
+builder.Services.AddScoped<PredictionService>();
+builder.Services.AddScoped<IPredictionService, ModelBackedPredictionService>();
 builder.Services.AddScoped<IModelTrainer, RandomForestTrainer>();
 builder.Services.AddScoped<IAttackPredictionService, AttackPredictionService>();
 builder.Services.AddScoped<IModelManagementService, ModelManagementService>();

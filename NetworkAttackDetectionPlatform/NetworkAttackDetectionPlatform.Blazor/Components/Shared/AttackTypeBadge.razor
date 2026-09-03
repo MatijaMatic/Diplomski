@@ -1,0 +1,10 @@
+@using NetworkAttackDetectionPlatform.Blazor.Utils
+
+<span class="badge bg-secondary">
+    @AttackDetectionHelpers.MapAttackType(AttackType)
+</span>
+
+@code {
+    [Parameter]
+    public int AttackType { get; set; }
+}
