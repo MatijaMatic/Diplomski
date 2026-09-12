@@ -49,7 +49,7 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
             {
                 if (string.IsNullOrWhiteSpace(_modelPath) || !_modelLoader.ModelExists(_modelPath))
                 {
-                    Console.WriteLine($"[ML] No persisted ML model found at '{_modelPath}'. Using deterministic fallback.");
+                    PrintModelNotFoundWarning(_modelPath);
                     _useModel = false;
                     return;
                 }
@@ -58,7 +58,7 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
                 _transformer = _modelLoader.LoadModelAsync(_modelPath).GetAwaiter().GetResult();
                 if (_transformer == null)
                 {
-                    Console.WriteLine($"[ML] Model loader returned null for path '{_modelPath}'. Using deterministic fallback.");
+                    PrintModelLoadFailureWarning(_modelPath);
                     _useModel = false;
                     return;
                 }
@@ -97,15 +97,66 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
                 _predictionEngine = _mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(_transformer);
 
                 _useModel = true;
-                Console.WriteLine($"[ML] Loaded ML model from '{_modelPath}'. FeatureVectorSize={_featureVectorSize}. Using model for predictions.");
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("??????????????????????????????????????????????????????");
+                Console.WriteLine("?   ? ML MODEL LOADED SUCCESSFULLY                   ?");
+                Console.WriteLine("??????????????????????????????????????????????????????");
+                Console.WriteLine($"?  Model Path: {_modelPath}");
+                Console.WriteLine($"?  Feature Count: {_featureVectorSize}");
+                Console.WriteLine("?  Status: USING TRAINED ML MODEL FOR PREDICTIONS   ?");
+                Console.WriteLine("?  This is scientifically valid and suitable for    ?");
+                Console.WriteLine("?  thesis documentation.                            ?");
+                Console.WriteLine("??????????????????????????????????????????????????????");
+                Console.ResetColor();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ML] Failed to load ML model from '{_modelPath}': {ex.Message}. Falling back to deterministic prediction.");
+                PrintModelLoadFailureWarning(_modelPath);
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"?  Details: {ex.Message}");
+                Console.ResetColor();
                 _useModel = false;
                 _transformer = null;
                 _predictionEngine = null;
             }
+        }
+
+        private static void PrintModelNotFoundWarning(string path)
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.WriteLine("?   ??  ML MODEL NOT FOUND - DEVELOPMENT FALLBACK    ?");
+            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.WriteLine($"?  Expected Path: {path}");
+            Console.WriteLine("?                                                    ?");
+            Console.WriteLine("?  Predictions will use DETERMINISTIC HASHING        ?");
+            Console.WriteLine("?  This is NOT a trained ML model.                  ?");
+            Console.WriteLine("?                                                    ?");
+            Console.WriteLine("?  For scientifically valid predictions:            ?");
+            Console.WriteLine("?  1. Obtain real CICIDS2017 dataset                ?");
+            Console.WriteLine("?  2. Run training pipeline                         ?");
+            Console.WriteLine("?  3. Copy model to expected path                   ?");
+            Console.WriteLine("?  4. Restart application                           ?");
+            Console.WriteLine("?                                                    ?");
+            Console.WriteLine("?  Until then, predictions are NOT suitable for     ?");
+            Console.WriteLine("?  thesis results or production use.                ?");
+            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.ResetColor();
+        }
+
+        private static void PrintModelLoadFailureWarning(string path)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.WriteLine("?   ? ML MODEL LOAD FAILED - DEVELOPMENT FALLBACK   ?");
+            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.WriteLine($"?  Path: {path}");
+            Console.WriteLine("?                                                    ?");
+            Console.WriteLine("?  Using non-ML deterministic hashing for fallback.?");
+            Console.WriteLine("?  Results are NOT suitable for thesis documentation ?");
+            Console.WriteLine("?  or scientific evaluation.                        ?");
+            Console.WriteLine("??????????????????????????????????????????????????????");
+            Console.ResetColor();
         }
 
         public Task<PredictionResult> PredictAsync(FeatureVector features)

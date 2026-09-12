@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -7,6 +8,7 @@ using Microsoft.ML;
 using Microsoft.ML.Data;
 using NetworkAttackDetectionPlatform.MachineLearning.Data;
 using NetworkAttackDetectionPlatform.MachineLearning.Datasets;
+using NetworkAttackDetectionPlatform.MachineLearning.Evaluation;
 using NetworkAttackDetectionPlatform.MachineLearning.Interfaces;
 using NetworkAttackDetectionPlatform.MachineLearning.Models;
 using NetworkAttackDetectionPlatform.MachineLearning.Preprocessing;
@@ -119,10 +121,22 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
 
                 // Step 8: Evaluate on validation set
                 var metrics = EvaluateModel(trainedModel, testSet);
-                result.ValidationAccuracy = metrics.MicroAccuracy;
-                result.Precision = metrics.MacroAccuracy; // Using MacroAccuracy as proxy
-                result.Recall = metrics.LogLoss > 0 ? 1.0 - metrics.LogLoss : 0.0; // Placeholder
-                result.F1Score = CalculateF1Score(result.Precision, result.Recall);
+
+                // Extract correct metrics from confusion matrix
+                var classLabels = ExtractClassLabels();
+                var perClassMetrics = EvaluationMetricsExtractor.ExtractPerClassMetrics(metrics.ConfusionMatrix, classLabels);
+                var aggregateMetrics = EvaluationMetricsExtractor.CalculateAggregateMetrics(perClassMetrics, metrics.MicroAccuracy, metrics.MacroAccuracy);
+
+                result.ValidationAccuracy = aggregateMetrics.MicroAccuracy;
+                result.Precision = aggregateMetrics.MacroPrecision;
+                result.Recall = aggregateMetrics.MacroRecall;
+                result.F1Score = aggregateMetrics.MacroF1;
+
+                // Store additional metrics for thesis documentation
+                result.MacroAccuracy = aggregateMetrics.MacroAccuracy;
+                result.WeightedF1 = aggregateMetrics.WeightedF1;
+                result.ConfusionMatrixJson = EvaluationMetricsExtractor.SerializeConfusionMatrix(metrics.ConfusionMatrix, classLabels);
+                result.PerClassMetricsJson = System.Text.Json.JsonSerializer.Serialize(perClassMetrics, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
 
                 // Step 9: Save model and metadata
                 if (!string.IsNullOrWhiteSpace(options.ModelOutputPath))
@@ -209,20 +223,30 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
             await _modelSaver.SaveModelAsync(model, schema, options.ModelOutputPath).ConfigureAwait(false);
 
             var metadataPath = Path.ChangeExtension(options.ModelOutputPath, ".metadata.json");
+
+            // Extract correct metrics
+            var classLabels = ExtractClassLabels();
+            var perClassMetrics = EvaluationMetricsExtractor.ExtractPerClassMetrics(metrics.ConfusionMatrix, classLabels);
+            var aggregateMetrics = EvaluationMetricsExtractor.CalculateAggregateMetrics(perClassMetrics, metrics.MicroAccuracy, metrics.MacroAccuracy);
+
             var metadata = new ModelMetadata
             {
                 ModelName = "NetworkAttackClassifier",
                 Version = "2.0.0",
                 CreatedAt = DateTime.UtcNow,
                 TrainedAt = DateTime.UtcNow,
-                Algorithm = "Random Forest (FastTree)",
+                Algorithm = "FastTree + One-vs-All (Multiclass)",
                 TrainingSamplesCount = (int)(totalSamples * (1.0 - options.TestSplit)),
                 ValidationSamplesCount = (int)(totalSamples * options.TestSplit),
-                Accuracy = metrics.MicroAccuracy,
-                Precision = metrics.MacroAccuracy,
-                Recall = metrics.LogLoss > 0 ? 1.0 - metrics.LogLoss : 0.0,
-                F1Score = CalculateF1Score(metrics.MacroAccuracy, metrics.LogLoss > 0 ? 1.0 - metrics.LogLoss : 0.0),
-                ClassLabels = ExtractClassLabels(),
+                // Correct metrics
+                Accuracy = aggregateMetrics.MicroAccuracy,
+                Precision = aggregateMetrics.MacroPrecision,
+                Recall = aggregateMetrics.MacroRecall,
+                F1Score = aggregateMetrics.MacroF1,
+                // Additional metrics
+                MacroAccuracy = aggregateMetrics.MacroAccuracy,
+                WeightedF1 = aggregateMetrics.WeightedF1,
+                ClassLabels = classLabels,
                 DatasetName = options.DatasetName,
                 DatasetVersion = options.DatasetVersion,
                 FeatureCount = FeatureConfiguration.FeatureCount,
@@ -231,6 +255,9 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
                 PreprocessingConfig = $"Normalization: {options.EnableNormalization}, LabelMapping: {options.ApplyLabelMapping}",
                 NormalizationApplied = options.EnableNormalization,
                 LabelMappingApplied = options.ApplyLabelMapping,
+                // Confusion matrix and per-class metrics for thesis
+                ConfusionMatrixJson = EvaluationMetricsExtractor.SerializeConfusionMatrix(metrics.ConfusionMatrix, classLabels),
+                PerClassMetricsJson = System.Text.Json.JsonSerializer.Serialize(perClassMetrics, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }),
                 HyperParameters = new Dictionary<string, string>
                 {
                     ["NumberOfTrees"] = options.NumberOfTrees.ToString(),
@@ -242,7 +269,12 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Training
             };
 
             await _modelSaver.SaveMetadataAsync(metadata, metadataPath).ConfigureAwait(false);
-            Console.WriteLine($"Model and metadata saved to: {options.ModelOutputPath}");
+            Console.WriteLine($"[ML] Model and metadata saved to: {options.ModelOutputPath}");
+            Console.WriteLine($"[ML] Evaluation Results:");
+            Console.WriteLine($"     Micro Accuracy: {aggregateMetrics.MicroAccuracy:P2}");
+            Console.WriteLine($"     Macro Precision: {aggregateMetrics.MacroPrecision:F4}");
+            Console.WriteLine($"     Macro Recall: {aggregateMetrics.MacroRecall:F4}");
+            Console.WriteLine($"     Macro F1: {aggregateMetrics.MacroF1:F4}");
         }
 
         private double CalculateF1Score(double precision, double recall)
