@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.MachineLearning", "NetworkAttackDetectionPlatform.MachineLearning\NetworkAttackDetectionPlatform.MachineLearning.csproj", "{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner", "NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner\NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner.csproj", "{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x64.Build.0 = Release|Any CPU
 		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x86.ActiveCfg = Release|Any CPU
 		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x86.Build.0 = Release|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x64.Build.0 = Debug|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x86.Build.0 = Debug|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x64.ActiveCfg = Release|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x64.Build.0 = Release|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x86.ActiveCfg = Release|Any CPU
+		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
