@@ -65,14 +65,6 @@ public class FeatureConfiguration
         "BwdPSHFlags",
         "FwdURGFlags",
         "BwdURGFlags",
-        "FINFlagCount",
-        "SYNFlagCount",
-        "RSTFlagCount",
-        "PSHFlagCount",
-        "ACKFlagCount",
-        "URGFlagCount",
-        "CWEFlagCount",
-        "ECEFlagCount",
         "FwdHeaderLength",
         "BwdHeaderLength",
         "FwdPacketsPerSecond",
@@ -82,10 +74,19 @@ public class FeatureConfiguration
         "PacketLengthMean",
         "PacketLengthStd",
         "PacketLengthVariance",
+        "FINFlagCount",
+        "SYNFlagCount",
+        "RSTFlagCount",
+        "PSHFlagCount",
+        "ACKFlagCount",
+        "URGFlagCount",
+        "CWEFlagCount",
+        "ECEFlagCount",
         "DownUpRatio",
         "AveragePacketSize",
         "AvgFwdSegmentSize",
         "AvgBwdSegmentSize",
+        "FwdHeaderLengthDuplicate",
         "FwdAvgBytesPerBulk",
         "FwdAvgPacketsPerBulk",
         "FwdAvgBulkRate",
@@ -98,6 +99,8 @@ public class FeatureConfiguration
         "SubflowBwdBytes",
         "InitWinBytesForward",
         "InitWinBytesBackward",
+        "ActDataPktFwd",
+        "MinSegSizeForward",
         "ActiveMean",
         "ActiveStd",
         "ActiveMax",
@@ -105,10 +108,7 @@ public class FeatureConfiguration
         "IdleMean",
         "IdleStd",
         "IdleMax",
-        "IdleMin",
-        "ActDataPktFwd",
-        "MinSegSizeForward",
-        "Protocol"
+        "IdleMin"
     };
 
     /// <summary>
@@ -137,8 +137,7 @@ public class FeatureConfiguration
         "SubflowFwdBytes",
         "SubflowBwdPackets",
         "SubflowBwdBytes",
-        "ActDataPktFwd",
-        "Protocol"
+        "ActDataPktFwd"
     };
 
     /// <summary>

@@ -107,7 +107,7 @@ namespace NetworkAttackDetectionPlatform.API.Controllers
                     DestinationIp = traffic.DestinationIp,
                     SourcePort = (int)traffic.DestinationPort,  // Using DestinationPort as source for mapping
                     DestinationPort = (int)traffic.DestinationPort,
-                    Protocol = (int)traffic.Protocol,
+                    Protocol = traffic.Protocol,
                     AttackType = classification?.AttackType ?? 0,
                     Severity = classification?.Severity ?? 0,
                     Confidence = classification?.Confidence ?? 0.0,

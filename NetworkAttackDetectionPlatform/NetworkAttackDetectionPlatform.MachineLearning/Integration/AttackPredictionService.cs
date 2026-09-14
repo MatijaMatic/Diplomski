@@ -81,29 +81,36 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Integration
                     $"All 78 CICIDS2017 features are required for valid ML predictions.");
             }
 
-            // Map all 78 features to FeatureVector in correct order
+            // Map all 78 features to FeatureVector by authoritative feature names
             var fv = new FeatureVector();
-
-            // Use reflection to read all float properties in order
-            var properties = typeof(Cicids2017PredictionRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance);
             var featureNames = FeatureConfiguration.NumericalFeatures;
 
-            var propIndex = 0;
-            foreach (var prop in properties)
+            // Map features by name to avoid relying on reflection declaration order
+            var dtoType = typeof(Cicids2017PredictionRequest);
+            foreach (var fname in featureNames)
             {
-                // Skip non-float properties (SourceIp, DestinationIp)
-                if (prop.PropertyType != typeof(float))
-                    continue;
-
-                if (propIndex < featureNames.Length)
+                var prop = dtoType.GetProperty(fname);
+                if (prop == null)
                 {
-                    var value = prop.GetValue(traffic);
-                    if (value != null && float.TryParse(value.ToString(), out var floatValue))
-                    {
-                        fv.Features[featureNames[propIndex]] = floatValue;
-                    }
+                    throw new ArgumentException($"Prediction DTO missing required property '{fname}'");
                 }
-                propIndex++;
+
+                var raw = prop.GetValue(traffic);
+                if (raw == null)
+                {
+                    throw new ArgumentException($"Feature '{fname}' is null in prediction request");
+                }
+
+                try
+                {
+                    // DTO defines numeric CICIDS2017 features as float
+                    var floatVal = Convert.ToSingle(raw);
+                    fv.Features[fname] = floatVal;
+                }
+                catch (Exception ex)
+                {
+                    throw new ArgumentException($"Feature '{fname}' could not be converted to float: {ex.Message}");
+                }
             }
 
             // Store identifiers for later use

@@ -4,8 +4,7 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Models
 {
     /// <summary>
     /// Represents the complete CICIDS2017 dataset feature set for training.
-    /// Includes 78 network traffic features plus attack label.
-    /// Compatible with ML.NET IDataView for training pipeline integration.
+    /// 78 numerical features (indices 0..77) followed by Label at index 78.
     /// </summary>
     public sealed class Cicids2017TrainingData
     {
@@ -151,82 +150,77 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Models
         public float BwdURGFlags { get; set; }
 
         [LoadColumn(34)]
-        [ColumnName("FINFlagCount")]
-        public float FINFlagCount { get; set; }
-
-        [LoadColumn(35)]
-        [ColumnName("SYNFlagCount")]
-        public float SYNFlagCount { get; set; }
-
-        [LoadColumn(36)]
-        [ColumnName("RSTFlagCount")]
-        public float RSTFlagCount { get; set; }
-
-        [LoadColumn(37)]
-        [ColumnName("PSHFlagCount")]
-        public float PSHFlagCount { get; set; }
-
-        [LoadColumn(38)]
-        [ColumnName("ACKFlagCount")]
-        public float ACKFlagCount { get; set; }
-
-        [LoadColumn(39)]
-        [ColumnName("URGFlagCount")]
-        public float URGFlagCount { get; set; }
-
-        [LoadColumn(40)]
-        [ColumnName("CWEFlagCount")]
-        public float CWEFlagCount { get; set; }
-
-        [LoadColumn(41)]
-        [ColumnName("ECEFlagCount")]
-        public float ECEFlagCount { get; set; }
-
-        // Header Length
-        [LoadColumn(42)]
         [ColumnName("FwdHeaderLength")]
         public float FwdHeaderLength { get; set; }
 
-        [LoadColumn(43)]
+        [LoadColumn(35)]
         [ColumnName("BwdHeaderLength")]
         public float BwdHeaderLength { get; set; }
 
-        // Packets Per Second
-        [LoadColumn(44)]
+        [LoadColumn(36)]
         [ColumnName("FwdPacketsPerSecond")]
         public float FwdPacketsPerSecond { get; set; }
 
-        [LoadColumn(45)]
+        [LoadColumn(37)]
         [ColumnName("BwdPacketsPerSecond")]
         public float BwdPacketsPerSecond { get; set; }
 
-        // Packet Length Statistics
-        [LoadColumn(46)]
+        [LoadColumn(38)]
         [ColumnName("MinPacketLength")]
         public float MinPacketLength { get; set; }
 
-        [LoadColumn(47)]
+        [LoadColumn(39)]
         [ColumnName("MaxPacketLength")]
         public float MaxPacketLength { get; set; }
 
-        [LoadColumn(48)]
+        [LoadColumn(40)]
         [ColumnName("PacketLengthMean")]
         public float PacketLengthMean { get; set; }
 
-        [LoadColumn(49)]
+        [LoadColumn(41)]
         [ColumnName("PacketLengthStd")]
         public float PacketLengthStd { get; set; }
 
-        [LoadColumn(50)]
+        [LoadColumn(42)]
         [ColumnName("PacketLengthVariance")]
         public float PacketLengthVariance { get; set; }
 
-        // Down/Up Ratio
+        [LoadColumn(43)]
+        [ColumnName("FINFlagCount")]
+        public float FINFlagCount { get; set; }
+
+        [LoadColumn(44)]
+        [ColumnName("SYNFlagCount")]
+        public float SYNFlagCount { get; set; }
+
+        [LoadColumn(45)]
+        [ColumnName("RSTFlagCount")]
+        public float RSTFlagCount { get; set; }
+
+        [LoadColumn(46)]
+        [ColumnName("PSHFlagCount")]
+        public float PSHFlagCount { get; set; }
+
+        [LoadColumn(47)]
+        [ColumnName("ACKFlagCount")]
+        public float ACKFlagCount { get; set; }
+
+        [LoadColumn(48)]
+        [ColumnName("URGFlagCount")]
+        public float URGFlagCount { get; set; }
+
+        [LoadColumn(49)]
+        [ColumnName("CWEFlagCount")]
+        public float CWEFlagCount { get; set; }
+
+        [LoadColumn(50)]
+        [ColumnName("ECEFlagCount")]
+        public float ECEFlagCount { get; set; }
+
         [LoadColumn(51)]
         [ColumnName("DownUpRatio")]
         public float DownUpRatio { get; set; }
 
-        // Average Packet Size
         [LoadColumn(52)]
         [ColumnName("AveragePacketSize")]
         public float AveragePacketSize { get; set; }
@@ -239,105 +233,99 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Models
         [ColumnName("AvgBwdSegmentSize")]
         public float AvgBwdSegmentSize { get; set; }
 
-        // Bulk Features
         [LoadColumn(55)]
+        [ColumnName("FwdHeaderLengthDuplicate")]
+        public float FwdHeaderLengthDuplicate { get; set; }
+
+        [LoadColumn(56)]
         [ColumnName("FwdAvgBytesPerBulk")]
         public float FwdAvgBytesPerBulk { get; set; }
 
-        [LoadColumn(56)]
+        [LoadColumn(57)]
         [ColumnName("FwdAvgPacketsPerBulk")]
         public float FwdAvgPacketsPerBulk { get; set; }
 
-        [LoadColumn(57)]
+        [LoadColumn(58)]
         [ColumnName("FwdAvgBulkRate")]
         public float FwdAvgBulkRate { get; set; }
 
-        [LoadColumn(58)]
+        [LoadColumn(59)]
         [ColumnName("BwdAvgBytesPerBulk")]
         public float BwdAvgBytesPerBulk { get; set; }
 
-        [LoadColumn(59)]
+        [LoadColumn(60)]
         [ColumnName("BwdAvgPacketsPerBulk")]
         public float BwdAvgPacketsPerBulk { get; set; }
 
-        [LoadColumn(60)]
+        [LoadColumn(61)]
         [ColumnName("BwdAvgBulkRate")]
         public float BwdAvgBulkRate { get; set; }
 
-        // Subflow Features
-        [LoadColumn(61)]
+        [LoadColumn(62)]
         [ColumnName("SubflowFwdPackets")]
         public float SubflowFwdPackets { get; set; }
 
-        [LoadColumn(62)]
+        [LoadColumn(63)]
         [ColumnName("SubflowFwdBytes")]
         public float SubflowFwdBytes { get; set; }
 
-        [LoadColumn(63)]
+        [LoadColumn(64)]
         [ColumnName("SubflowBwdPackets")]
         public float SubflowBwdPackets { get; set; }
 
-        [LoadColumn(64)]
+        [LoadColumn(65)]
         [ColumnName("SubflowBwdBytes")]
         public float SubflowBwdBytes { get; set; }
 
-        // Init Window Bytes
-        [LoadColumn(65)]
+        [LoadColumn(66)]
         [ColumnName("InitWinBytesForward")]
         public float InitWinBytesForward { get; set; }
 
-        [LoadColumn(66)]
+        [LoadColumn(67)]
         [ColumnName("InitWinBytesBackward")]
         public float InitWinBytesBackward { get; set; }
 
-        // Active/Idle Time Statistics
-        [LoadColumn(67)]
-        [ColumnName("ActiveMean")]
-        public float ActiveMean { get; set; }
-
         [LoadColumn(68)]
-        [ColumnName("ActiveStd")]
-        public float ActiveStd { get; set; }
-
-        [LoadColumn(69)]
-        [ColumnName("ActiveMax")]
-        public float ActiveMax { get; set; }
-
-        [LoadColumn(70)]
-        [ColumnName("ActiveMin")]
-        public float ActiveMin { get; set; }
-
-        [LoadColumn(71)]
-        [ColumnName("IdleMean")]
-        public float IdleMean { get; set; }
-
-        [LoadColumn(72)]
-        [ColumnName("IdleStd")]
-        public float IdleStd { get; set; }
-
-        [LoadColumn(73)]
-        [ColumnName("IdleMax")]
-        public float IdleMax { get; set; }
-
-        [LoadColumn(74)]
-        [ColumnName("IdleMin")]
-        public float IdleMin { get; set; }
-
-        // Additional Features
-        [LoadColumn(75)]
         [ColumnName("ActDataPktFwd")]
         public float ActDataPktFwd { get; set; }
 
-        [LoadColumn(76)]
+        [LoadColumn(69)]
         [ColumnName("MinSegSizeForward")]
         public float MinSegSizeForward { get; set; }
 
-        // Protocol (TCP=6, UDP=17, etc.)
-        [LoadColumn(77)]
-        [ColumnName("Protocol")]
-        public float Protocol { get; set; }
+        [LoadColumn(70)]
+        [ColumnName("ActiveMean")]
+        public float ActiveMean { get; set; }
 
-        // Label - Attack Type
+        [LoadColumn(71)]
+        [ColumnName("ActiveStd")]
+        public float ActiveStd { get; set; }
+
+        [LoadColumn(72)]
+        [ColumnName("ActiveMax")]
+        public float ActiveMax { get; set; }
+
+        [LoadColumn(73)]
+        [ColumnName("ActiveMin")]
+        public float ActiveMin { get; set; }
+
+        [LoadColumn(74)]
+        [ColumnName("IdleMean")]
+        public float IdleMean { get; set; }
+
+        [LoadColumn(75)]
+        [ColumnName("IdleStd")]
+        public float IdleStd { get; set; }
+
+        [LoadColumn(76)]
+        [ColumnName("IdleMax")]
+        public float IdleMax { get; set; }
+
+        [LoadColumn(77)]
+        [ColumnName("IdleMin")]
+        public float IdleMin { get; set; }
+
+        // Label - Attack Type (CSV index 78)
         [LoadColumn(78)]
         [ColumnName("Label")]
         public string Label { get; set; } = string.Empty;

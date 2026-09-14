@@ -7,7 +7,7 @@ namespace NetworkAttackDetectionPlatform.Application.DTOs.ML
     /// Complete CICIDS2017 network traffic record with all 78 flow features.
     /// Designed for scientifically valid ML-based attack classification.
     /// All 78 features MUST be provided; missing values are NOT accepted.
-    /// 
+    ///
     /// Feature order and indices must match FeatureConfiguration.NumericalFeatures exactly.
     /// </summary>
     public sealed class Cicids2017PredictionRequest
@@ -158,73 +158,73 @@ namespace NetworkAttackDetectionPlatform.Application.DTOs.ML
         [Required]
         public float BwdURGFlags { get; set; }
 
-        // Feature 34: FINFlagCount
-        [Required]
-        public float FINFlagCount { get; set; }
-
-        // Feature 35: SYNFlagCount
-        [Required]
-        public float SYNFlagCount { get; set; }
-
-        // Feature 36: RSTFlagCount
-        [Required]
-        public float RSTFlagCount { get; set; }
-
-        // Feature 37: PSHFlagCount
-        [Required]
-        public float PSHFlagCount { get; set; }
-
-        // Feature 38: ACKFlagCount
-        [Required]
-        public float ACKFlagCount { get; set; }
-
-        // Feature 39: URGFlagCount
-        [Required]
-        public float URGFlagCount { get; set; }
-
-        // Feature 40: CWEFlagCount
-        [Required]
-        public float CWEFlagCount { get; set; }
-
-        // Feature 41: ECEFlagCount
-        [Required]
-        public float ECEFlagCount { get; set; }
-
-        // Feature 42: FwdHeaderLength
+        // Feature 34: FwdHeaderLength
         [Required]
         public float FwdHeaderLength { get; set; }
 
-        // Feature 43: BwdHeaderLength
+        // Feature 35: BwdHeaderLength
         [Required]
         public float BwdHeaderLength { get; set; }
 
-        // Feature 44: FwdPacketsPerSecond
+        // Feature 36: FwdPacketsPerSecond
         [Required]
         public float FwdPacketsPerSecond { get; set; }
 
-        // Feature 45: BwdPacketsPerSecond
+        // Feature 37: BwdPacketsPerSecond
         [Required]
         public float BwdPacketsPerSecond { get; set; }
 
-        // Feature 46: MinPacketLength
+        // Feature 38: MinPacketLength
         [Required]
         public float MinPacketLength { get; set; }
 
-        // Feature 47: MaxPacketLength
+        // Feature 39: MaxPacketLength
         [Required]
         public float MaxPacketLength { get; set; }
 
-        // Feature 48: PacketLengthMean
+        // Feature 40: PacketLengthMean
         [Required]
         public float PacketLengthMean { get; set; }
 
-        // Feature 49: PacketLengthStd
+        // Feature 41: PacketLengthStd
         [Required]
         public float PacketLengthStd { get; set; }
 
-        // Feature 50: PacketLengthVariance
+        // Feature 42: PacketLengthVariance
         [Required]
         public float PacketLengthVariance { get; set; }
+
+        // Feature 43: FINFlagCount
+        [Required]
+        public float FINFlagCount { get; set; }
+
+        // Feature 44: SYNFlagCount
+        [Required]
+        public float SYNFlagCount { get; set; }
+
+        // Feature 45: RSTFlagCount
+        [Required]
+        public float RSTFlagCount { get; set; }
+
+        // Feature 46: PSHFlagCount
+        [Required]
+        public float PSHFlagCount { get; set; }
+
+        // Feature 47: ACKFlagCount
+        [Required]
+        public float ACKFlagCount { get; set; }
+
+        // Feature 48: URGFlagCount
+        [Required]
+        public float URGFlagCount { get; set; }
+
+        // Feature 49: CWEFlagCount
+        [Required]
+        public float CWEFlagCount { get; set; }
+
+        // Feature 50: ECEFlagCount
+        [Required]
+        public float ECEFlagCount { get; set; }
 
         // Feature 51: DownUpRatio
         [Required]
@@ -242,97 +242,101 @@ namespace NetworkAttackDetectionPlatform.Application.DTOs.ML
         [Required]
         public float AvgBwdSegmentSize { get; set; }
 
-        // Feature 55: FwdAvgBytesPerBulk
+        // Feature 55: FwdHeaderLengthDuplicate
+        [Required]
+        public float FwdHeaderLengthDuplicate { get; set; }
+
+        // Feature 56: FwdAvgBytesPerBulk
         [Required]
         public float FwdAvgBytesPerBulk { get; set; }
 
-        // Feature 56: FwdAvgPacketsPerBulk
+        // Feature 57: FwdAvgPacketsPerBulk
         [Required]
         public float FwdAvgPacketsPerBulk { get; set; }
 
-        // Feature 57: FwdAvgBulkRate
+        // Feature 58: FwdAvgBulkRate
         [Required]
         public float FwdAvgBulkRate { get; set; }
 
-        // Feature 58: BwdAvgBytesPerBulk
+        // Feature 59: BwdAvgBytesPerBulk
         [Required]
         public float BwdAvgBytesPerBulk { get; set; }
 
-        // Feature 59: BwdAvgPacketsPerBulk
+        // Feature 60: BwdAvgPacketsPerBulk
         [Required]
         public float BwdAvgPacketsPerBulk { get; set; }
 
-        // Feature 60: BwdAvgBulkRate
+        // Feature 61: BwdAvgBulkRate
         [Required]
         public float BwdAvgBulkRate { get; set; }
 
-        // Feature 61: SubflowFwdPackets
+        // Feature 62: SubflowFwdPackets
         [Required]
         public float SubflowFwdPackets { get; set; }
 
-        // Feature 62: SubflowFwdBytes
+        // Feature 63: SubflowFwdBytes
         [Required]
         public float SubflowFwdBytes { get; set; }
 
-        // Feature 63: SubflowBwdPackets
+        // Feature 64: SubflowBwdPackets
         [Required]
         public float SubflowBwdPackets { get; set; }
 
-        // Feature 64: SubflowBwdBytes
+        // Feature 65: SubflowBwdBytes
         [Required]
         public float SubflowBwdBytes { get; set; }
 
-        // Feature 65: InitWinBytesForward
+        // Feature 66: InitWinBytesForward
         [Required]
         public float InitWinBytesForward { get; set; }
 
-        // Feature 66: InitWinBytesBackward
+        // Feature 67: InitWinBytesBackward
         [Required]
         public float InitWinBytesBackward { get; set; }
 
-        // Feature 67: ActiveMean
-        [Required]
-        public float ActiveMean { get; set; }
-
-        // Feature 68: ActiveStd
-        [Required]
-        public float ActiveStd { get; set; }
-
-        // Feature 69: ActiveMax
-        [Required]
-        public float ActiveMax { get; set; }
-
-        // Feature 70: ActiveMin
-        [Required]
-        public float ActiveMin { get; set; }
-
-        // Feature 71: IdleMean
-        [Required]
-        public float IdleMean { get; set; }
-
-        // Feature 72: IdleStd
-        [Required]
-        public float IdleStd { get; set; }
-
-        // Feature 73: IdleMax
-        [Required]
-        public float IdleMax { get; set; }
-
-        // Feature 74: IdleMin
-        [Required]
-        public float IdleMin { get; set; }
-
-        // Feature 75: ActDataPktFwd
+        // Feature 68: ActDataPktFwd
         [Required]
         public float ActDataPktFwd { get; set; }
 
-        // Feature 76: MinSegSizeForward
+        // Feature 69: MinSegSizeForward
         [Required]
         public float MinSegSizeForward { get; set; }
 
-        // Feature 77: Protocol
+        // Feature 70: ActiveMean
+        [Required]
+        public float ActiveMean { get; set; }
+
+        // Feature 71: ActiveStd
+        [Required]
+        public float ActiveStd { get; set; }
+
+        // Feature 72: ActiveMax
+        [Required]
+        public float ActiveMax { get; set; }
+
+        // Feature 73: ActiveMin
+        [Required]
+        public float ActiveMin { get; set; }
+
+        // Feature 74: IdleMean
+        [Required]
+        public float IdleMean { get; set; }
+
+        // Feature 75: IdleStd
+        [Required]
+        public float IdleStd { get; set; }
+
+        // Feature 76: IdleMax
+        [Required]
+        public float IdleMax { get; set; }
+
+        // Feature 77: IdleMin
+        [Required]
+        public float IdleMin { get; set; }
+
+        // Protocol metadata (not part of the 78-feature ML vector)
         [Required]
         [Range(0, 255)]
-        public float Protocol { get; set; }
+        public int Protocol { get; set; }
     }
 }
