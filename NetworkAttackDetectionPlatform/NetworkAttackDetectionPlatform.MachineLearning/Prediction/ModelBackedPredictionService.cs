@@ -24,7 +24,7 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
 
         // If a real model is loaded, store transformer and a prediction engine
         private ITransformer? _transformer;
-        private PredictionEngine<ModelInput, ModelOutput>? _predictionEngine;
+        private PredictionEngine<NetworkAttackDetectionPlatform.MachineLearning.Models.Cicids2017TrainingData, ModelOutput>? _predictionEngine;
         private int _featureVectorSize = 0;
         private bool _useModel = false;
 
@@ -93,8 +93,8 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
                     }
                 }
 
-                // Create prediction engine
-                _predictionEngine = _mlContext.Model.CreatePredictionEngine<ModelInput, ModelOutput>(_transformer);
+                // Create prediction engine using the full 78-feature input schema
+                _predictionEngine = _mlContext.Model.CreatePredictionEngine<NetworkAttackDetectionPlatform.MachineLearning.Models.Cicids2017TrainingData, ModelOutput>(_transformer);
 
                 _useModel = true;
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -165,7 +165,7 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
             {
                 try
                 {
-                    var input = MapToModelInput(features);
+                    var input = MapToCicids2017TrainingData(features);
                     var output = _predictionEngine.Predict(input);
 
                     // Derive a confidence value. Prefer Probability if present, otherwise compute softmax over Score.
@@ -216,69 +216,47 @@ namespace NetworkAttackDetectionPlatform.MachineLearning.Prediction
             return Task.FromResult((IList<PredictionResult>)list);
         }
 
-        private ModelInput MapToModelInput(FeatureVector fv)
+        private NetworkAttackDetectionPlatform.MachineLearning.Models.Cicids2017TrainingData MapToCicids2017TrainingData(FeatureVector fv)
         {
-            var arrSize = Math.Max(0, _featureVectorSize);
-            if (arrSize == 0)
-            {
-                // Fallback size of 9 (legacy ModelInput) to avoid nulls
-                arrSize = 9;
-            }
+            if (fv == null || fv.Features == null)
+                throw new ArgumentNullException(nameof(fv));
 
-            var input = new ModelInput
-            {
-                Features = new float[arrSize],
-                Label = string.Empty
-            };
+            var featuresList = NetworkAttackDetectionPlatform.MachineLearning.Preprocessing.FeatureConfiguration.NumericalFeatures;
+            var dtoType = typeof(NetworkAttackDetectionPlatform.MachineLearning.Models.Cicids2017TrainingData);
+            var obj = new NetworkAttackDetectionPlatform.MachineLearning.Models.Cicids2017TrainingData();
 
-            // Best-effort: map a few well-known values if present in the feature vector into the expected indices.
-            // The authoritative order is defined by FeatureConfiguration.NumericalFeatures during training.
-            try
+            for (int i = 0; i < featuresList.Length; i++)
             {
-                var featuresList = NetworkAttackDetectionPlatform.MachineLearning.Preprocessing.FeatureConfiguration.NumericalFeatures;
-                for (int i = 0; i < Math.Min(arrSize, featuresList.Length); i++)
+                var fname = featuresList[i];
+
+                if (!fv.Features.TryGetValue(fname, out var raw) || raw == null)
                 {
-                    var fname = featuresList[i];
-                    if (fv?.Features != null && fv.Features.TryGetValue(fname, out var val) && val != null)
-                    {
-                        if (float.TryParse(val.ToString(), out var f))
-                        {
-                            input.Features[i] = f;
-                        }
-                    }
+                    // Do not silently zero-fill required features for full 78-feature predictions
+                    throw new ArgumentException($"Missing required feature '{fname}' for ML prediction.");
                 }
 
-                // Also map common names that might be present in incoming FeatureVector
-                if (fv?.Features != null)
+                float floatVal;
+                try
                 {
-                    if (fv.Features.TryGetValue("SourcePort", out var sp) && sp != null)
-                    {
-                        var idx = Array.IndexOf(featuresList, "SourcePort");
-                        if (idx >= 0 && idx < input.Features.Length && float.TryParse(sp.ToString(), out var fsp))
-                            input.Features[idx] = fsp;
-                    }
-
-                    if (fv.Features.TryGetValue("DestinationPort", out var dp) && dp != null)
-                    {
-                        var idx = Array.IndexOf(featuresList, "DestinationPort");
-                        if (idx >= 0 && idx < input.Features.Length && float.TryParse(dp.ToString(), out var fdp))
-                            input.Features[idx] = fdp;
-                    }
-
-                    if (fv.Features.TryGetValue("Protocol", out var pr) && pr != null)
-                    {
-                        var idx = Array.IndexOf(featuresList, "Protocol");
-                        if (idx >= 0 && idx < input.Features.Length && float.TryParse(pr.ToString(), out var fpr))
-                            input.Features[idx] = fpr;
-                    }
+                    floatVal = Convert.ToSingle(raw);
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ML] Non-fatal: mapping to ModelInput failed for some features; zeros will be used. {ex.Message}");
+                catch (Exception ex)
+                {
+                    throw new ArgumentException($"Feature '{fname}' could not be converted to float: {ex.Message}");
+                }
+
+                var prop = dtoType.GetProperty(fname);
+                if (prop == null)
+                {
+                    throw new ArgumentException($"Cicids2017TrainingData missing property '{fname}'");
+                }
+
+                prop.SetValue(obj, floatVal);
             }
 
-            return input;
+            // Label is not required for prediction
+            obj.Label = string.Empty;
+            return obj;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.37411.7
+# Visual Studio Version 18
+VisualStudioVersion = 18.9.12128.139 oobstable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.Domain", "NetworkAttackDetectionPlatform.Domain\NetworkAttackDetectionPlatform.Domain.csproj", "{BCD98860-ADB0-4B49-9AA5-6AB233888FCC}"
 EndProject
@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatf
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.MachineLearning", "NetworkAttackDetectionPlatform.MachineLearning\NetworkAttackDetectionPlatform.MachineLearning.csproj", "{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner", "NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner\NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner.csproj", "{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner", "NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner\NetworkAttackDetectionPlatform.MachineLearning.ValidationRunner.csproj", "{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,18 +99,18 @@ Global
 		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x64.Build.0 = Release|Any CPU
 		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x86.ActiveCfg = Release|Any CPU
 		{C8D06EB9-29E1-4532-855D-D5A8E4BE8571}.Release|x86.Build.0 = Release|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x64.Build.0 = Debug|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Debug|x86.Build.0 = Debug|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x64.ActiveCfg = Release|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x64.Build.0 = Release|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x86.ActiveCfg = Release|Any CPU
-		{D2C3E4F5-E6F6-4843-9F0B-2C3D4E5F6G7H}.Release|x86.Build.0 = Release|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Debug|x64.Build.0 = Debug|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Debug|x86.Build.0 = Debug|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Release|x64.ActiveCfg = Release|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Release|x64.Build.0 = Release|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Release|x86.ActiveCfg = Release|Any CPU
+		{5C5B7BF9-6D08-48A5-9EF0-95D9CAE2D3D0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
